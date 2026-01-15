@@ -3,7 +3,7 @@
 > A modern web application for discovering, previewing, customizing, and executing prompt templates
 
 [![GitHub](https://img.shields.io/badge/GitHub-lowtouch--ai%2Fpromptstash--webapp-blue?logo=github)](https://github.com/lowtouch-ai/promptstash-webapp)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
 PromptStash is a powerful, open-source prompt management tool that helps you organize, customize, and deploy AI prompts across multiple platforms. Built with modern web technologies and designed for productivity.
 
@@ -169,7 +169,7 @@ We welcome contributions! Here's how you can help:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🏢 About lowtouch.ai
 
