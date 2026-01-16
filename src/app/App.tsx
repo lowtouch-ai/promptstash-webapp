@@ -12,6 +12,19 @@ import { mockTemplates, PromptTemplate } from '@/app/data/mock-templates';
 import { fetchTemplatesFromGitHub } from '@/app/services/github-templates';
 import { getRecentlyUsed, addToRecentlyUsed } from '@/app/services/recently-used';
 import { getFavorites, toggleFavorite, isFavorite } from '@/app/services/favorites';
+import { 
+  initializeAnalytics, 
+  trackAppLoaded, 
+  trackTemplateOpened,
+  trackCategoryFilterUsed,
+  trackTagFilterUsed,
+  trackFavoritesFilterAccessed,
+  trackRecentlyUsedAccessed,
+  trackViewModeChanged,
+  trackSearchUsed,
+  trackFavoriteAdded,
+  trackFavoriteRemoved
+} from '@/app/services/analytics';
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,9 +40,11 @@ export default function App() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>(getFavorites());
   const [permalinkProcessed, setPermalinkProcessed] = useState(false);
 
-  // Set page title
+  // Initialize analytics and set page title
   useEffect(() => {
     document.title = 'PromptStash.io - Built by the Community. Ready to Run Prompts';
+    initializeAnalytics();
+    trackAppLoaded();
   }, []);
 
   // Fetch templates from GitHub on mount
@@ -228,7 +243,7 @@ export default function App() {
     favoriteIds,
   ]);
 
-  const handleTagToggle = (tag: string, event: React.MouseEvent) => {
+  const handleTagToggle = (tag: string, event?: React.MouseEvent) => {
     // Close template detail when interacting with sidebar
     setSelectedTemplateId(null);
     
@@ -237,8 +252,8 @@ export default function App() {
     
     const tagIndex = allTags.indexOf(tag);
     
-    if (event.shiftKey && lastClickedTagIndex !== null) {
-      // Shift+click: Select range
+    if (event?.shiftKey && lastClickedTagIndex !== null) {
+      // Shift+click: Select range of tags
       const start = Math.min(lastClickedTagIndex, tagIndex);
       const end = Math.max(lastClickedTagIndex, tagIndex);
       const rangeToSelect = allTags.slice(start, end + 1);
@@ -246,18 +261,23 @@ export default function App() {
       setSelectedTags((prev) => {
         const newSelection = new Set(prev);
         rangeToSelect.forEach((t) => newSelection.add(t));
-        return Array.from(newSelection);
+        const updated = Array.from(newSelection);
+        trackTagFilterUsed(updated);
+        return updated;
       });
-    } else if (event.ctrlKey || event.metaKey) {
+    } else if (event?.ctrlKey || event?.metaKey) {
       // Ctrl/Cmd+click: Toggle individual tag while keeping others
-      setSelectedTags((prev) =>
-        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-      );
+      setSelectedTags((prev) => {
+        const updated = prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag];
+        trackTagFilterUsed(updated);
+        return updated;
+      });
       setLastClickedTagIndex(tagIndex);
     } else {
       // Regular click: Select only this tag (deselect others)
       setSelectedTags([tag]);
       setLastClickedTagIndex(tagIndex);
+      trackTagFilterUsed([tag]);
     }
   };
 
@@ -274,6 +294,11 @@ export default function App() {
       setSelectedCategory('all');
       setSelectedTags([]);
     }
+    if (newFilter === 'favorites') {
+      trackFavoritesFilterAccessed();
+    } else if (newFilter === 'recent') {
+      trackRecentlyUsedAccessed();
+    }
   };
 
   const handleCategoryChange = (category: string) => {
@@ -284,21 +309,40 @@ export default function App() {
     setQuickFilter('none');
     
     setSelectedCategory(category);
+    trackCategoryFilterUsed(category);
   };
 
   const handleToggleFavorite = (id: string) => {
+    const template = templates.find(t => t.id === id);
     const newFavoriteStatus = toggleFavorite(id);
     setFavoriteIds(getFavorites());
+    
     // Update templates state to reflect the change
     setTemplates((prev) =>
       prev.map((t) => (t.id === id ? { ...t, isFavorite: newFavoriteStatus } : t))
     );
+    
+    // Track favorite added/removed with template path
+    if (template) {
+      const templatePath = template.yamlPath || template.id;
+      if (newFavoriteStatus) {
+        trackFavoriteAdded(templatePath);
+      } else {
+        trackFavoriteRemoved(templatePath);
+      }
+    }
   };
 
   const handleTemplateSelect = (id: string) => {
     setSelectedTemplateId(id);
     addToRecentlyUsed(id);
     setRecentlyUsedIds(getRecentlyUsed());
+    
+    // Track template opened with yamlPath
+    const template = templates.find(t => t.id === id);
+    if (template) {
+      trackTemplateOpened(template.yamlPath || template.id);
+    }
   };
 
   const handleClearTags = () => {

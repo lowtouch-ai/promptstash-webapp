@@ -1,6 +1,7 @@
 import { LayoutGrid, List } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/app/components/ui/toggle-group';
+import { trackViewModeChanged } from '@/app/services/analytics';
 
 interface TemplateListHeaderProps {
   templateCount: number;
@@ -13,6 +14,14 @@ export function TemplateListHeader({
   viewMode,
   onViewModeChange,
 }: TemplateListHeaderProps) {
+  const handleViewModeChange = (value: string) => {
+    if (value) {
+      const mode = value as 'card' | 'list';
+      onViewModeChange(mode);
+      trackViewModeChanged(mode);
+    }
+  };
+  
   return (
     <div className="border-b bg-card/50 backdrop-blur p-4 flex items-center justify-between">
       <div>
@@ -21,7 +30,7 @@ export function TemplateListHeader({
           {templateCount} {templateCount === 1 ? 'template' : 'templates'} available
         </p>
       </div>
-      <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && onViewModeChange(value as 'card' | 'list')}>
+      <ToggleGroup type="single" value={viewMode} onValueChange={handleViewModeChange}>
         <ToggleGroupItem value="card" aria-label="Card view" size="sm">
           <LayoutGrid className="h-4 w-4" />
         </ToggleGroupItem>
