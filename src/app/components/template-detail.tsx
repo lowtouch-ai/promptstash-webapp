@@ -218,11 +218,20 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       document.execCommand('copy');
       document.body.removeChild(textarea);
       
-      // Show clipboard success message
-      toast.success('Prompt copied to clipboard!', {
-        description: 'Opening AI tool in 1 second...',
-        duration: 4000,
-      });
+      // Show different toast messages based on provider
+      if (platform === 'claude' || platform === 'gemini') {
+        const providerName = platform === 'claude' ? 'Claude' : 'Gemini';
+        toast.success(`Prompt copied to clipboard!`, {
+          description: `Paste in ${providerName}. Opening in 1 second...`,
+          duration: 4000,
+        });
+      } else {
+        // For ChatGPT and Grok
+        toast.success('Prompt copied to clipboard!', {
+          description: 'Opening AI tool in 1 second...',
+          duration: 4000,
+        });
+      }
     } catch (err) {
       document.body.removeChild(textarea);
       toast.error('Failed to copy to clipboard');
@@ -271,11 +280,11 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
             : `https://grok.com/`;
           break;
         case 'gemini':
-          freshUrl = freshCanUsePrefill
-            ? `https://aistudio.google.com/prompts/new_chat?prompt=${freshEncoded}`
-            : `https://aistudio.google.com/prompts/new_chat`;
+          // Gemini doesn't support URL prefill
+          freshUrl = `https://gemini.google.com/app`;
           break;
         case 'claude':
+          // Claude doesn't support URL prefill
           freshUrl = `https://claude.ai/new`;
           break;
         default:
@@ -284,8 +293,8 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       
       window.open(freshUrl, target, 'noopener,noreferrer');
       
-      // Show additional instruction if prompt was too long or platform doesn't support prefill
-      if (!freshCanUsePrefill || platform === 'claude') {
+      // Show additional instruction for platforms that don't support prefill (Claude and Gemini always need paste instruction)
+      if (!freshCanUsePrefill || platform === 'claude' || platform === 'gemini') {
         setTimeout(() => {
           toast.info('Paste your prompt', {
             description: 'Press Ctrl+V (or Cmd+V) in the AI tool to paste your prompt.',
