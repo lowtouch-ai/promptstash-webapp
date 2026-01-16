@@ -4,6 +4,7 @@ import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
 import { useRef, useEffect } from 'react';
 import { trackSearchUsed } from '@/app/services/analytics';
+import packageJson from '../../../package.json';
 
 interface NavigationProps {
   searchQuery: string;
@@ -53,7 +54,7 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
           <div className="flex flex-col">
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-base leading-tight">PromptStash.io</span>
-              <span className="text-[10px] text-muted-foreground leading-tight">v0.3.13</span>
+              <span className="text-[10px] text-muted-foreground leading-tight">v{packageJson.version}</span>
             </div>
             <span className="text-[10px] text-muted-foreground leading-tight">Built by the Community. Ready to Run Prompts</span>
           </div>

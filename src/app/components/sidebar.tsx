@@ -2,6 +2,13 @@ import { Folder, Tag, Clock, Star, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/app/components/ui/scroll-area';
 import { Badge } from '@/app/components/ui/badge';
 import { Separator } from '@/app/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 
 interface SidebarProps {
   selectedCategory: string;
@@ -69,27 +76,19 @@ export function Sidebar({
             <Folder className="h-4 w-4" />
             Categories
           </h3>
-          <div className="space-y-1">
-            <button
-              onClick={() => onCategoryChange('all')}
-              className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                selectedCategory === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-              }`}
-            >
-              All Templates
-            </button>
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => onCategoryChange(category)}
-                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                  selectedCategory === category ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          <Select value={selectedCategory} onValueChange={onCategoryChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Templates" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Templates</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator />
