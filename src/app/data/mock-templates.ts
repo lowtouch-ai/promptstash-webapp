@@ -15,6 +15,7 @@ export interface PromptTemplate {
   lastUpdated: string;
   githubCommit?: string;
   githubUrl?: string;
+  yamlPath?: string; // Relative path to YAML file for permalinks
   isFavorite?: boolean;
   isModified?: boolean;
 }
@@ -46,10 +47,9 @@ Make it engaging and accessible while maintaining technical accuracy.`,
       { name: 'tone_style', description: 'Writing style (e.g., formal, casual, conversational)', required: false },
       { name: 'prior_knowledge', description: 'Assumed knowledge level', required: false },
     ],
-    source: 'github',
-    lastUpdated: '10 Jan, 2026',
-    githubCommit: 'abc1234',
-    githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/content-creation/technical-blog-post.yaml',
+    source: 'local',
+    lastUpdated: '15 Jan 2026',
+    yamlPath: 'content-creation/technical-blog-post.yaml',
   },
   {
     id: '2',
@@ -77,6 +77,7 @@ Provide specific, actionable suggestions with examples.`,
     lastUpdated: '12 Jan, 2026',
     githubCommit: 'def5678',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/development/code-review.yaml',
+    yamlPath: 'development/code-review.yaml',
   },
   {
     id: '3',
@@ -107,6 +108,7 @@ Include:
     lastUpdated: '8 Jan, 2026',
     githubCommit: 'ghi9012',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/documentation/api-documentation.yaml',
+    yamlPath: 'documentation/api-documentation.yaml',
   },
   {
     id: '4',
@@ -139,6 +141,7 @@ Summary length: {{length}}`,
     lastUpdated: '11 Jan, 2026',
     githubCommit: 'jkl3456',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/research/paper-summarizer.yaml',
+    yamlPath: 'research/paper-summarizer.yaml',
   },
   {
     id: '5',
@@ -172,6 +175,7 @@ Design a structured path with:
     lastUpdated: '9 Jan, 2026',
     githubCommit: 'mno7890',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/education/learning-path-creator.yaml',
+    yamlPath: 'education/learning-path-creator.yaml',
   },
   {
     id: '6',
@@ -202,6 +206,7 @@ Include:
     lastUpdated: '13 Jan, 2026',
     githubCommit: 'pqr4567',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/development/bug-report-generator.yaml',
+    yamlPath: 'development/bug-report-generator.yaml',
   },
   {
     id: '7',
@@ -265,6 +270,7 @@ Provide:
     lastUpdated: '7 Jan, 2026',
     githubCommit: 'stu8901',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/development/database-schema-designer.yaml',
+    yamlPath: 'development/database-schema-designer.yaml',
   },
   {
     id: '9',
@@ -295,6 +301,7 @@ Create:
     lastUpdated: '15 Jan, 2026',
     githubCommit: 'vwx2345',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/education/interview-question-generator.yaml',
+    yamlPath: 'education/interview-question-generator.yaml',
   },
   {
     id: '10',
@@ -326,6 +333,7 @@ Deliver:
     lastUpdated: '6 Jan, 2026',
     githubCommit: 'yz12345',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/content-creation/email-campaign-writer.yaml',
+    yamlPath: 'content-creation/email-campaign-writer.yaml',
   },
 ];
 

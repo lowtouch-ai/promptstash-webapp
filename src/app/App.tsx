@@ -25,6 +25,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [recentlyUsedIds, setRecentlyUsedIds] = useState<string[]>(getRecentlyUsed());
   const [favoriteIds, setFavoriteIds] = useState<string[]>(getFavorites());
+  const [permalinkProcessed, setPermalinkProcessed] = useState(false);
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'PromptStash.io - Built by the Community. Ready to Run Prompts';
+  }, []);
 
   // Fetch templates from GitHub on mount
   useEffect(() => {
@@ -40,7 +46,24 @@ export default function App() {
             isFavorite: favorites.includes(template.id),
           }));
           setTemplates(templatesWithFavorites);
-          toast.success(`Loaded ${githubTemplates.length} templates from GitHub`);
+          
+          // Check if templates came from cache
+          const cached = localStorage.getItem('promptstash_templates_cache');
+          if (cached) {
+            const cacheData = JSON.parse(cached);
+            const cacheAge = Date.now() - cacheData.timestamp;
+            const isStale = cacheAge >= 60 * 60 * 1000; // 1 hour
+            
+            if (isStale) {
+              toast.info('Using cached templates (GitHub API unavailable)', {
+                description: 'Fresh templates will load after rate limit resets'
+              });
+            } else {
+              toast.success(`Loaded ${githubTemplates.length} templates from cache`);
+            }
+          } else {
+            toast.success(`Loaded ${githubTemplates.length} templates from GitHub`);
+          }
         } else {
           // Fallback to mock data if GitHub fetch fails
           const favorites = getFavorites();
@@ -49,7 +72,7 @@ export default function App() {
             isFavorite: favorites.includes(template.id),
           }));
           setTemplates(templatesWithFavorites);
-          toast.info('Using local templates');
+          toast.warning('Using local templates (GitHub API unavailable)');
         }
       } catch (error) {
         console.error('Error loading templates:', error);
@@ -59,7 +82,7 @@ export default function App() {
           isFavorite: favorites.includes(template.id),
         }));
         setTemplates(templatesWithFavorites);
-        toast.error('Failed to load templates from GitHub, using local templates');
+        toast.warning('Using local templates (GitHub API unavailable)');
       } finally {
         setIsLoading(false);
       }
@@ -67,6 +90,70 @@ export default function App() {
 
     loadTemplates();
   }, []);
+
+  // Handle permalink on mount - check for ?y= URL parameter
+  useEffect(() => {
+    console.log('Permalink effect running:', { 
+      permalinkProcessed, 
+      isLoading, 
+      templatesCount: templates.length,
+      currentURL: window.location.href,
+      searchParams: window.location.search,
+    });
+    
+    // Only process permalink once and after templates are loaded
+    if (permalinkProcessed || isLoading || templates.length === 0) {
+      console.log('Permalink effect early return:', { permalinkProcessed, isLoading, templatesCount: templates.length });
+      return;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const yamlPath = urlParams.get('y');
+    
+    console.log('URL search string:', window.location.search);
+    console.log('Checking for permalink parameter:', yamlPath);
+    
+    if (yamlPath) {
+      console.log('Permalink yamlPath:', yamlPath);
+      console.log('Available templates:', templates.map(t => ({ id: t.id, name: t.name, yamlPath: t.yamlPath })));
+      
+      // Find template by yamlPath
+      const template = templates.find(t => t.yamlPath === yamlPath);
+      console.log('Found template:', template);
+      
+      if (template) {
+        console.log('Selecting template:', template.id);
+        handleTemplateSelect(template.id);
+        toast.success('Template loaded from permalink');
+      } else {
+        toast.error('Template not found');
+        console.error('No template found with yamlPath:', yamlPath);
+        // Clear invalid parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('y');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+    
+    setPermalinkProcessed(true);
+  }, [templates, isLoading, permalinkProcessed]);
+
+  // Update URL when template is selected (but not on initial permalink load)
+  useEffect(() => {
+    if (selectedTemplateId) {
+      const template = templates.find(t => t.id === selectedTemplateId);
+      if (template?.yamlPath) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('y', template.yamlPath);
+        window.history.pushState({}, '', url.toString());
+      }
+    } else {
+      // Clear the parameter when no template is selected
+      const url = new URL(window.location.href);
+      url.searchParams.delete('y');
+      window.history.pushState({}, '', url.toString());
+    }
+  }, [selectedTemplateId, templates]);
 
   // Dynamically extract all unique tags from templates
   const allTags = useMemo(() => {
