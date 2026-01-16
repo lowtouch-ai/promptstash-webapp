@@ -1,4 +1,4 @@
-import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink, Sparkles } from 'lucide-react';
+import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
@@ -46,7 +46,7 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
         {/* Logo */}
         <div className="flex items-center gap-3 min-w-[240px]">
           <img
-            src="/logo.png"
+            src="https://demo2025a.lowtouch.ai/static/favicon.png"
             alt="PromptStash.io"
             className="w-8 h-8 rounded-full object-cover"
           />
