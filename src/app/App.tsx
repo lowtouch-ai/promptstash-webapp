@@ -25,6 +25,7 @@ import {
   trackFavoriteAdded,
   trackFavoriteRemoved
 } from '@/app/services/analytics';
+import { initializeMetaTags, updateMetaTagsForTemplate, resetMetaTags } from '@/app/services/meta-tags';
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,6 +46,7 @@ export default function App() {
     document.title = 'PromptStash.io - Built by the Community. Ready to Run Prompts';
     initializeAnalytics();
     trackAppLoaded();
+    initializeMetaTags();
   }, []);
 
   // Fetch templates from GitHub on mount
@@ -137,12 +139,21 @@ export default function App() {
       console.log('Found template:', template);
       
       if (template) {
-        console.log('Selecting template:', template.id);
-        handleTemplateSelect(template.id);
+        console.log('Selecting template from permalink:', template.id);
+        // Set selected template directly
+        setSelectedTemplateId(template.id);
+        // Add to recently used
+        addToRecentlyUsed(template.id);
+        setRecentlyUsedIds(getRecentlyUsed());
+        // Track template opened
+        trackTemplateOpened(template.yamlPath || template.id);
+        // Update meta tags for social sharing
+        updateMetaTagsForTemplate(template);
         toast.success('Template loaded from permalink');
       } else {
         toast.error('Template not found');
         console.error('No template found with yamlPath:', yamlPath);
+        console.error('Available yamlPaths:', templates.map(t => t.yamlPath));
         // Clear invalid parameter
         const url = new URL(window.location.href);
         url.searchParams.delete('y');
@@ -153,22 +164,33 @@ export default function App() {
     setPermalinkProcessed(true);
   }, [templates, isLoading, permalinkProcessed]);
 
-  // Update URL when template is selected (but not on initial permalink load)
+  // Update URL when template is selected (but not during initial permalink load)
   useEffect(() => {
+    // Skip URL update if we're still processing the initial permalink
+    if (!permalinkProcessed) {
+      return;
+    }
+    
     if (selectedTemplateId) {
       const template = templates.find(t => t.id === selectedTemplateId);
       if (template?.yamlPath) {
         const url = new URL(window.location.href);
-        url.searchParams.set('y', template.yamlPath);
-        window.history.pushState({}, '', url.toString());
+        const currentYamlPath = url.searchParams.get('y');
+        // Only update if the URL parameter is different
+        if (currentYamlPath !== template.yamlPath) {
+          url.searchParams.set('y', template.yamlPath);
+          window.history.pushState({}, '', url.toString());
+        }
       }
     } else {
       // Clear the parameter when no template is selected
       const url = new URL(window.location.href);
-      url.searchParams.delete('y');
-      window.history.pushState({}, '', url.toString());
+      if (url.searchParams.has('y')) {
+        url.searchParams.delete('y');
+        window.history.pushState({}, '', url.toString());
+      }
     }
-  }, [selectedTemplateId, templates]);
+  }, [selectedTemplateId, templates, permalinkProcessed]);
 
   // Dynamically extract all unique tags from templates
   const allTags = useMemo(() => {
@@ -342,6 +364,7 @@ export default function App() {
     const template = templates.find(t => t.id === id);
     if (template) {
       trackTemplateOpened(template.yamlPath || template.id);
+      updateMetaTagsForTemplate(template);
     }
   };
 
@@ -378,7 +401,10 @@ export default function App() {
                 <TemplateDetail
                   key="template-detail"
                   template={selectedTemplate}
-                  onClose={() => setSelectedTemplateId(null)}
+                  onClose={() => {
+                    setSelectedTemplateId(null);
+                    resetMetaTags();
+                  }}
                   onToggleFavorite={handleToggleFavorite}
                 />
               ) : (
