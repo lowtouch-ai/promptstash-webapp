@@ -1,10 +1,9 @@
-import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink } from 'lucide-react';
+import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink, Sparkles } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
 import { useRef, useEffect } from 'react';
 import { trackSearchUsed } from '@/app/services/analytics';
-import logoIcon from 'figma:asset/693d034363b815c0cda12a4562d34db7b101147c.png';
 
 interface NavigationProps {
   searchQuery: string;
@@ -46,7 +45,11 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
       <div className="flex h-14 items-center px-4 gap-4">
         {/* Logo */}
         <div className="flex items-center gap-3 min-w-[240px]">
-          <img src={logoIcon} alt="PromptStash.io" className="w-8 h-8 rounded-full" />
+          <img
+            src="/logo.png"
+            alt="PromptStash.io"
+            className="w-8 h-8 rounded-full object-cover"
+          />
           <div className="flex flex-col">
             <span className="font-semibold text-base leading-tight">PromptStash.io</span>
             <span className="text-[10px] text-muted-foreground leading-tight">Built by the Community. Ready to Run Prompts</span>
