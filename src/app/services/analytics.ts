@@ -32,14 +32,19 @@ let isInitialized = false;
 export function initializeAnalytics() {
   if (isInitialized) return;
   
-  // Debug: Print measurement ID to console
-  console.log('[Analytics] Attempting to initialize with Measurement ID:', GA_MEASUREMENT_ID);
-  console.log('[Analytics] Environment variable VITE_GA_MEASUREMENT_ID:', import.meta.env.VITE_GA_MEASUREMENT_ID);
+  // Debug: Print measurement ID to console (only in development)
+  if (import.meta.env.DEV) {
+    console.log('[Analytics] Attempting to initialize with Measurement ID:', GA_MEASUREMENT_ID);
+    console.log('[Analytics] Environment variable VITE_GA_MEASUREMENT_ID:', import.meta.env.VITE_GA_MEASUREMENT_ID);
+  }
   
   // Check if we have a valid measurement ID
   if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
-    console.warn('[Analytics] No valid GA Measurement ID configured. Analytics will not track events.');
-    console.warn('[Analytics] Please set VITE_GA_MEASUREMENT_ID environment variable or update GA_MEASUREMENT_ID in analytics.ts');
+    // Silently skip initialization if no valid ID is configured
+    // This prevents console warnings in production when GA is not set up
+    if (import.meta.env.DEV) {
+      console.log('[Analytics] No GA Measurement ID configured. Tracking disabled.');
+    }
     return;
   }
   

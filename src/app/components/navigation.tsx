@@ -53,7 +53,7 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
           <div className="flex flex-col">
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-base leading-tight">PromptStash.io</span>
-              <span className="text-[10px] text-muted-foreground leading-tight">v0.3.11</span>
+              <span className="text-[10px] text-muted-foreground leading-tight">v0.3.13</span>
             </div>
             <span className="text-[10px] text-muted-foreground leading-tight">Built by the Community. Ready to Run Prompts</span>
           </div>

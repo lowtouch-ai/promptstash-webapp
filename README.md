@@ -252,6 +252,70 @@ The sitemap contains:
 
 For detailed instructions and troubleshooting, see [scripts/README.md](scripts/README.md).
 
+## 🔍 SEO & Social Sharing
+
+PromptStash is optimized for sharing on social media platforms like X (Twitter) and LinkedIn with dynamic meta tags.
+
+### Dynamic Meta Tags
+
+When you share a permalink to a template, the app automatically generates rich preview cards with:
+
+- **Template Name** as the title
+- **Comprehensive Description** including category, tags, and field count
+- **Category-Specific Images** from Unsplash for visual appeal
+- **Proper URL** with the `?y=` permalink parameter
+
+### Supported Platforms
+
+The meta tags service generates:
+- **Open Graph tags** (og:*) - for LinkedIn, Facebook, and most social platforms
+- **Twitter Card tags** (twitter:*) - optimized for X (formerly Twitter)
+- **Standard meta tags** - for search engines and browsers
+
+### How It Works
+
+1. **Template Selection**: When a user selects a template, meta tags are dynamically updated
+2. **Permalink Sharing**: Share the URL with `?y=path/to/template.yaml` parameter
+3. **Social Preview**: Platforms like X and LinkedIn will fetch the rich preview
+4. **Reset on Close**: Meta tags reset to defaults when returning to the home page
+
+### Meta Tag Examples
+
+For a template like "Technical Blog Post Generator":
+
+```html
+<!-- Open Graph -->
+<meta property="og:title" content="Technical Blog Post Generator - PromptStash.io">
+<meta property="og:description" content="Generate comprehensive technical blog posts... | Content Creation template with 4 customizable fields. Tags: writing, technical, blog. Ready to use with ChatGPT, Claude, Grok, and Gemini.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&h=630">
+<meta property="og:url" content="https://promptstash.io?y=templates/technical-blog.yaml">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Technical Blog Post Generator - PromptStash.io">
+<meta name="twitter:description" content="Generate comprehensive technical blog posts...">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=1200&h=630">
+```
+
+### Testing Social Previews
+
+Use these tools to test how your links will appear:
+
+- **X (Twitter)**: [Twitter Card Validator](https://cards-dev.twitter.com/validator)
+- **LinkedIn**: Share in a post and view the preview
+- **Facebook**: [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+- **General**: [OpenGraph.xyz](https://www.opengraph.xyz/)
+
+### Implementation
+
+The meta tags service is located at `/src/app/services/meta-tags.ts` and includes:
+
+- `initializeMetaTags()` - Sets up default meta tags on app load
+- `updateMetaTagsForTemplate(template)` - Updates tags when a template is selected
+- `resetMetaTags()` - Resets to defaults when closing a template
+
+Category-specific images are automatically selected based on template categories like Content Creation, Development, Marketing, etc.
+
 ---
 
 Made with ❤️ by the lowtouch.ai team
