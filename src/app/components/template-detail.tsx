@@ -54,6 +54,19 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
   
   // Debounce timer ref for auto-save
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Refs to always have current values in async callbacks
+  const templateRef = useRef(template);
+  const placeholderValuesRef = useRef(placeholderValues);
+  
+  // Keep refs in sync with current values
+  useEffect(() => {
+    templateRef.current = template;
+  }, [template]);
+  
+  useEffect(() => {
+    placeholderValuesRef.current = placeholderValues;
+  }, [placeholderValues]);
 
   // Load saved values when template changes
   useEffect(() => {
@@ -186,7 +199,14 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       return;
     }
 
-    // Copy the rendered prompt to clipboard using fallback method
+    // Capture template ID now for tracking later
+    const templateIdForTracking = templateRef.current.id;
+
+    // Determine target: if Ctrl/Cmd+Click, open new tab; otherwise reuse same tab per platform
+    const isNewTabRequest = event && (event.ctrlKey || event.metaKey);
+    const target = isNewTabRequest ? '_blank' : `_promptstash_${platform}`;
+
+    // Copy to clipboard first using current values
     const textarea = document.createElement('textarea');
     textarea.value = renderedPrompt;
     textarea.style.position = 'fixed';
@@ -198,75 +218,85 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       document.execCommand('copy');
       document.body.removeChild(textarea);
       
-      // Show clipboard success message first
+      // Show clipboard success message
       toast.success('Prompt copied to clipboard!', {
         description: 'Opening AI tool in 1 second...',
         duration: 4000,
       });
-      
-      // Check URL length - safe limit is around 2000 characters
-      const encoded = encodeURIComponent(renderedPrompt);
-      const MAX_URL_LENGTH = 2000;
-      const canUsePrefill = encoded.length < MAX_URL_LENGTH;
-      
-      let url;
-      
-      switch (platform) {
-        case 'chatgpt':
-          // ChatGPT supports URL prefilling with ?q= parameter
-          url = canUsePrefill 
-            ? `https://chatgpt.com/?q=${encoded}`
-            : `https://chatgpt.com/`;
-          break;
-          
-        case 'grok':
-          // Grok supports URL prefilling with ?q= parameter
-          url = canUsePrefill
-            ? `https://grok.com/?q=${encoded}`
-            : `https://grok.com/`;
-          break;
-          
-        case 'gemini':
-          // Gemini AI Studio supports URL prefilling with ?prompt= parameter
-          url = canUsePrefill
-            ? `https://aistudio.google.com/prompts/new_chat?prompt=${encoded}`
-            : `https://aistudio.google.com/prompts/new_chat`;
-          break;
-          
-        case 'claude':
-          // Claude does not support stable URL prefilling - rely on clipboard
-          url = `https://claude.ai/new`;
-          break;
-          
-        default:
-          url = 'about:blank';
-      }
-
-      // Determine target: if Ctrl/Cmd+Click, open new tab; otherwise reuse same tab per platform
-      const isNewTabRequest = event && (event.ctrlKey || event.metaKey);
-      const target = isNewTabRequest ? '_blank' : `_promptstash_${platform}`;
-
-      // Delay opening the tab so user can see the toast message
-      setTimeout(() => {
-        window.open(url, target, 'noopener,noreferrer');
-        
-        // Show additional instruction if prompt was too long or platform doesn't support prefill
-        if (!canUsePrefill || platform === 'claude') {
-          setTimeout(() => {
-            toast.info('Paste your prompt', {
-              description: 'Press Ctrl+V (or Cmd+V) in the AI tool to paste your prompt.',
-              duration: 5000,
-            });
-          }, 300);
-        }
-      }, 1000);
     } catch (err) {
       document.body.removeChild(textarea);
       toast.error('Failed to copy to clipboard');
+      return;
     }
 
+    // Delay opening the tab so user can see the toast message
+    setTimeout(() => {
+      // Re-compute the prompt using the CURRENT ref values to avoid stale closures
+      const currentTemplate = templateRef.current.template || '';
+      const currentValues = placeholderValuesRef.current;
+      
+      let freshRenderedPrompt = currentTemplate;
+      
+      // First pass: replace filled placeholders
+      Object.entries(currentValues).forEach(([key, value]) => {
+        if (value) {
+          freshRenderedPrompt = freshRenderedPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
+        }
+      });
+      
+      // Second pass: remove lines with unfilled placeholders
+      const freshLines = freshRenderedPrompt.split('\n');
+      const freshFilteredLines = freshLines.filter(line => {
+        const hasPlaceholder = /\{\{[^}]+\}\}/.test(line);
+        return !hasPlaceholder;
+      });
+      
+      freshRenderedPrompt = freshFilteredLines.join('\n');
+      
+      // Re-encode with fresh prompt
+      const MAX_URL_LENGTH = 2000;
+      const freshEncoded = encodeURIComponent(freshRenderedPrompt);
+      const freshCanUsePrefill = freshEncoded.length < MAX_URL_LENGTH;
+      
+      let freshUrl;
+      switch (platform) {
+        case 'chatgpt':
+          freshUrl = freshCanUsePrefill 
+            ? `https://chatgpt.com/?q=${freshEncoded}`
+            : `https://chatgpt.com/`;
+          break;
+        case 'grok':
+          freshUrl = freshCanUsePrefill
+            ? `https://grok.com/?q=${freshEncoded}`
+            : `https://grok.com/`;
+          break;
+        case 'gemini':
+          freshUrl = freshCanUsePrefill
+            ? `https://aistudio.google.com/prompts/new_chat?prompt=${freshEncoded}`
+            : `https://aistudio.google.com/prompts/new_chat`;
+          break;
+        case 'claude':
+          freshUrl = `https://claude.ai/new`;
+          break;
+        default:
+          freshUrl = 'about:blank';
+      }
+      
+      window.open(freshUrl, target, 'noopener,noreferrer');
+      
+      // Show additional instruction if prompt was too long or platform doesn't support prefill
+      if (!freshCanUsePrefill || platform === 'claude') {
+        setTimeout(() => {
+          toast.info('Paste your prompt', {
+            description: 'Press Ctrl+V (or Cmd+V) in the AI tool to paste your prompt.',
+            duration: 5000,
+          });
+        }, 300);
+      }
+    }, 1000);
+
     // Track prompt sent
-    trackPromptSent(template.id, platform);
+    trackPromptSent(templateIdForTracking, platform);
     trackProviderSelected(platform);
   };
 

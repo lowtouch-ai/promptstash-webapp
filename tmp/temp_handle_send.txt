@@ -1,0 +1,7 @@
+  const handleSendToAI = (platform: 'chatgpt' | 'claude' | 'grok' | 'gemini', event?: React.MouseEvent) => {
+    const missingRequired = parsedPlaceholders
+      .filter((p) => p.required && !placeholderValues[p.name])
+      .map((p) => p.name);
+
+    if (missingRequired.length > 0) {
+      toast.error(`Please fill in required fields: ${missingRequired.join(', ')}`);

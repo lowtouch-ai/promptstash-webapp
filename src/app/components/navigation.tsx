@@ -51,7 +51,10 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
             className="w-8 h-8 rounded-full object-cover"
           />
           <div className="flex flex-col">
-            <span className="font-semibold text-base leading-tight">PromptStash.io</span>
+            <div className="flex items-baseline gap-2">
+              <span className="font-semibold text-base leading-tight">PromptStash.io</span>
+              <span className="text-[10px] text-muted-foreground leading-tight">v0.3.11</span>
+            </div>
             <span className="text-[10px] text-muted-foreground leading-tight">Built by the Community. Ready to Run Prompts</span>
           </div>
         </div>
@@ -78,20 +81,16 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
           <Button variant="ghost" size="icon" title="Import from clipboard">
             <Clipboard className="h-4 w-4" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <a 
+            href="https://github.com/lowtouch-ai/promptstash-webapp" 
+            target="_blank" 
+            rel="noopener noreferrer"
             title="View source code on GitHub"
-            asChild
           >
-            <a 
-              href="https://github.com/lowtouch-ai/promptstash-webapp" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
+            <Button variant="ghost" size="icon">
               <Github className="h-4 w-4" />
-            </a>
-          </Button>
+            </Button>
+          </a>
           <Button
             variant="ghost"
             size="icon"
