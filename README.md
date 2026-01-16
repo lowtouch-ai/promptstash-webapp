@@ -194,6 +194,64 @@ PromptStash is an open-source project by [lowtouch.ai](https://lowtouch.ai), bui
 - Animations powered by [Motion](https://motion.dev/)
 - Design inspired by GitHub, Vercel, and Linear
 
+## 🗺️ Sitemap.xml Support
+
+PromptStash includes SEO-optimized sitemap generation for all template permalinks.
+
+### Generating the Sitemap
+
+Run the sitemap generator script to create `/public/sitemap.xml`:
+
+```bash
+npm run generate-sitemap
+```
+
+### GitHub Token (Recommended)
+
+For the best experience and to avoid rate limits, use a GitHub personal access token:
+
+1. **Create a token** at [github.com/settings/tokens](https://github.com/settings/tokens)
+   - Select scope: `public_repo` (or no scopes for public repos)
+2. **Set environment variable**:
+   ```bash
+   export GITHUB_TOKEN=your_token_here
+   ```
+3. **Run the generator**:
+   ```bash
+   npm run generate-sitemap
+   ```
+
+### What's Included
+
+The sitemap contains:
+- Homepage URL with priority 1.0
+- Permalink for each template using the `?y=` parameter format
+- Proper SEO metadata (lastmod, changefreq, priority)
+- Referenced in `/public/robots.txt` for search engine discovery
+
+### Output Example
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://promptstash.io</loc>
+    <lastmod>2026-01-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://promptstash.io/?y=business/client/proposal/client_proposal_summary_generator_v1.yaml</loc>
+    <lastmod>2026-01-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <!-- ... more template URLs ... -->
+</urlset>
+```
+
+For detailed instructions and troubleshooting, see [scripts/README.md](scripts/README.md).
+
 ---
 
 Made with ❤️ by the lowtouch.ai team

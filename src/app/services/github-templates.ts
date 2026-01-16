@@ -5,6 +5,8 @@ const GITHUB_REPO = 'lowtouch-ai/promptstash-templates';
 const GITHUB_BRANCH = 'main';
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
+const CACHE_KEY = 'promptstash_templates_cache';
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
 
 interface GitHubTreeItem {
   path: string;
@@ -41,14 +43,132 @@ interface YAMLTemplate {
   }>; // Fallback for backwards compatibility
 }
 
+interface CacheData {
+  templates: PromptTemplate[];
+  timestamp: number;
+}
+
+// Load templates from cache
+function loadFromCache(): PromptTemplate[] | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+
+    const data: CacheData = JSON.parse(cached);
+    const now = Date.now();
+
+    // Check if cache is still valid
+    if (now - data.timestamp < CACHE_TTL) {
+      console.log('Using cached templates (fresh)');
+      return data.templates;
+    }
+
+    console.log('Cache expired');
+    return null;
+  } catch (error) {
+    console.error('Error loading from cache:', error);
+    return null;
+  }
+}
+
+// Save templates to cache
+function saveToCache(templates: PromptTemplate[]): void {
+  try {
+    const data: CacheData = {
+      templates,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    console.log('Templates cached successfully');
+  } catch (error) {
+    console.error('Error saving to cache:', error);
+  }
+}
+
+// Load stale cache (even if expired) as fallback
+function loadStaleCache(): PromptTemplate[] | null {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+
+    const data: CacheData = JSON.parse(cached);
+    console.log('Using stale cached templates as fallback');
+    return data.templates;
+  } catch (error) {
+    console.error('Error loading stale cache:', error);
+    return null;
+  }
+}
+
+// Load static pre-warmed cache from public folder
+async function loadStaticCache(): Promise<PromptTemplate[] | null> {
+  try {
+    const response = await fetch('/templates-cache.json');
+    if (!response.ok) {
+      console.log('No static cache file available');
+      return null;
+    }
+    
+    const data: CacheData = await response.json();
+    console.log('Loaded templates from static cache file');
+    
+    // Save to localStorage for future use
+    saveToCache(data.templates);
+    
+    return data.templates;
+  } catch (error) {
+    console.log('Static cache not available:', error);
+    return null;
+  }
+}
+
 export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
+  // Try to load from cache first
+  const cachedTemplates = loadFromCache();
+  if (cachedTemplates) {
+    return cachedTemplates;
+  }
+
+  // Also check for stale cache - if it exists, return it while we try to fetch fresh data in the background
+  const staleTemplates = loadStaleCache();
+
+  // Try to load static cache as a fallback
+  const staticTemplates = await loadStaticCache();
+  if (staticTemplates) {
+    return staticTemplates;
+  }
+
   try {
     // Fetch the repository tree
     const treeUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`;
-    const treeResponse = await fetch(treeUrl);
+    const treeResponse = await fetch(treeUrl, {
+      headers: {
+        'Accept': 'application/vnd.github.v3+json',
+      },
+    });
     
     if (!treeResponse.ok) {
-      throw new Error(`Failed to fetch repository tree: ${treeResponse.statusText}`);
+      // Check if it's a rate limit error
+      if (treeResponse.status === 403) {
+        const rateLimitRemaining = treeResponse.headers.get('X-RateLimit-Remaining');
+        const rateLimitReset = treeResponse.headers.get('X-RateLimit-Reset');
+        console.warn('GitHub API rate limit hit', { rateLimitRemaining, rateLimitReset });
+        
+        // Return stale cache if available, otherwise empty array
+        if (staleTemplates) {
+          console.log('Returning stale cache due to rate limit');
+          return staleTemplates;
+        }
+      }
+      
+      const errorText = await treeResponse.text();
+      console.error('GitHub API Error:', {
+        status: treeResponse.status,
+        statusText: treeResponse.statusText,
+        body: errorText,
+      });
+      
+      throw new Error(`Failed to fetch repository tree: ${treeResponse.status}`);
     }
 
     const treeData: GitHubTree = await treeResponse.json();
@@ -83,32 +203,12 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
             ...folderTags,
           ];
 
-          // Get last modified date from Git commits API
-          let lastUpdated = 'Unknown';
-          try {
-            const commitsUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${file.path}&page=1&per_page=1`;
-            const commitsResponse = await fetch(commitsUrl);
-            
-            if (commitsResponse.ok) {
-              const commits = await commitsResponse.json();
-              if (commits && commits.length > 0) {
-                const commitDate = new Date(commits[0].commit.author.date);
-                lastUpdated = commitDate.toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Failed to fetch commit date for ${file.path}:`, error);
-            // Fallback to current date if commit fetch fails
-            lastUpdated = new Date().toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            });
-          }
+          // Use current date as lastUpdated to avoid extra API calls
+          const lastUpdated = new Date().toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          });
 
           // Extract template text from prompt field (could be string or nested object with "user" key)
           let templateText = '';
@@ -152,7 +252,7 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
 
           const template: PromptTemplate = {
             id: file.sha,
-            name: parsed.name || pathParts[pathParts.length - 1].replace(/\.ya?ml$/, ''),
+            name: parsed.name || pathParts[pathParts.length - 1].replace(/\\.ya?ml$/, ''),
             description: parsed.description || '',
             category: parsed.category || folderTags[0] || 'Uncategorized',
             tags: Array.from(new Set(allTags)), // Remove duplicates
@@ -162,6 +262,7 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
             lastUpdated,
             githubCommit: file.sha.substring(0, 7),
             githubUrl: `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/${file.path}`,
+            yamlPath: file.path, // Add the relative path for permalinks
           };
 
           return template;
@@ -173,9 +274,15 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
     );
 
     // Filter out nulls and return
-    return templates.filter((t): t is PromptTemplate => t !== null);
+    const filteredTemplates = templates.filter((t): t is PromptTemplate => t !== null);
+    saveToCache(filteredTemplates);
+    return filteredTemplates;
   } catch (error) {
     console.error('Error fetching templates from GitHub:', error);
+    // Try to load stale cache as fallback
+    if (staleTemplates) {
+      return staleTemplates;
+    }
     return [];
   }
 }

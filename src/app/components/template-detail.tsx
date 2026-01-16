@@ -13,6 +13,8 @@ import {
   ArrowLeft,
   Send,
   Star,
+  Share2,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -23,6 +25,7 @@ import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { ScrollArea } from '@/app/components/ui/scroll-area';
 import { Separator } from '@/app/components/ui/separator';
+import { Popover, PopoverContent, PopoverTrigger } from '@/app/components/ui/popover';
 import { PromptTemplate } from '@/app/data/mock-templates';
 import { toast } from 'sonner';
 import { 
@@ -40,6 +43,7 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('variables');
+  const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
   
   // Debounce timer ref for auto-save
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -278,6 +282,52 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     window.open(template.githubUrl, target, 'noopener,noreferrer');
   };
 
+  // Generate permalink URL
+  const getPermalinkUrl = () => {
+    if (!template.yamlPath) return window.location.href.split('?')[0];
+    const url = new URL(window.location.href.split('?')[0]); // Use current URL without query params
+    url.searchParams.set('y', template.yamlPath);
+    return url.toString();
+  };
+
+  // Handle copying permalink
+  const handleCopyPermalink = () => {
+    const url = getPermalinkUrl();
+    const textarea = document.createElement('textarea');
+    textarea.value = url;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+      document.execCommand('copy');
+      toast.success('Link copied to clipboard!');
+      setSharePopoverOpen(false);
+    } catch (err) {
+      toast.error('Failed to copy link');
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+
+  // Handle sharing to X (Twitter)
+  const handleShareToX = () => {
+    const url = getPermalinkUrl();
+    const text = `Check out this prompt template: ${template.name}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+    setSharePopoverOpen(false);
+  };
+
+  // Handle sharing to LinkedIn
+  const handleShareToLinkedIn = () => {
+    const url = getPermalinkUrl();
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    setSharePopoverOpen(false);
+  };
+
   return (
     <motion.div 
       className="flex flex-col h-full bg-background"
@@ -307,6 +357,57 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                       className={`h-4 w-4 ${template.isFavorite ? 'fill-primary text-primary' : ''}`} 
                     />
                   </Button>
+                  <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
+                    <PopoverTrigger>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2" align="start">
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleCopyPermalink}
+                          title="Copy Link"
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleShareToX}
+                          title="Share on X"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleShareToLinkedIn}
+                          title="Share on LinkedIn"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                          >
+                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                          </svg>
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <p className="text-muted-foreground mb-3">{template.description}</p>
                 <div className="flex items-center gap-2 flex-wrap">
