@@ -7,6 +7,10 @@
 
 PromptStash is a powerful, open-source prompt management tool that helps you organize, customize, and deploy AI prompts across multiple platforms. Built with modern web technologies and designed for productivity.
 
+**🌐 [Use PromptStash for free at promptstash.io](https://promptstash.io)** - Works seamlessly with ChatGPT, Claude, Grok, and Gemini.
+
+**📝 Contribute to the Template Library** - Help grow the prompt collection by contributing your own templates to the [promptstash-templates repository](https://github.com/lowtouch-ai/promptstash-templates). Share your best prompts with the community!
+
 ## ✨ Features
 
 ### 🎯 Core Functionality
@@ -178,6 +182,7 @@ PromptStash is an open-source project by [lowtouch.ai](https://lowtouch.ai), bui
 ## 🔗 Links
 
 - **Repository**: [github.com/lowtouch-ai/promptstash-webapp](https://github.com/lowtouch-ai/promptstash-webapp)
+- **Template Repository**: [github.com/lowtouch-ai/promptstash-templates](https://github.com/lowtouch-ai/promptstash-templates)
 - **Issues**: [Report bugs or request features](https://github.com/lowtouch-ai/promptstash-webapp/issues)
 - **Discussions**: [Join the conversation](https://github.com/lowtouch-ai/promptstash-webapp/discussions)
 
