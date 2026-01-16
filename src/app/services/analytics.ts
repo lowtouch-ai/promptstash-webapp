@@ -24,13 +24,24 @@ import ReactGA from 'react-ga4';
 
 // Google Analytics Measurement ID
 // Replace with your actual GA4 Measurement ID
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX';
 
 // Initialize Google Analytics
 let isInitialized = false;
 
 export function initializeAnalytics() {
   if (isInitialized) return;
+  
+  // Debug: Print measurement ID to console
+  console.log('[Analytics] Attempting to initialize with Measurement ID:', GA_MEASUREMENT_ID);
+  console.log('[Analytics] Environment variable VITE_GA_MEASUREMENT_ID:', import.meta.env.VITE_GA_MEASUREMENT_ID);
+  
+  // Check if we have a valid measurement ID
+  if (!GA_MEASUREMENT_ID || GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') {
+    console.warn('[Analytics] No valid GA Measurement ID configured. Analytics will not track events.');
+    console.warn('[Analytics] Please set VITE_GA_MEASUREMENT_ID environment variable or update GA_MEASUREMENT_ID in analytics.ts');
+    return;
+  }
   
   try {
     ReactGA.initialize(GA_MEASUREMENT_ID, {
@@ -41,9 +52,10 @@ export function initializeAnalytics() {
       },
     });
     isInitialized = true;
-    console.log('[Analytics] Initialized with privacy-first settings');
+    console.log('[Analytics] ✓ Successfully initialized with privacy-first settings');
+    console.log('[Analytics] ✓ Measurement ID:', GA_MEASUREMENT_ID);
   } catch (error) {
-    console.error('[Analytics] Failed to initialize:', error);
+    console.error('[Analytics] ✗ Failed to initialize:', error);
   }
 }
 
