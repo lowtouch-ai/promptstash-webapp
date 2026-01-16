@@ -2,6 +2,8 @@ import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink } fr
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
+import { useRef, useEffect } from 'react';
+import { trackSearchUsed } from '@/app/services/analytics';
 import logoIcon from 'figma:asset/693d034363b815c0cda12a4562d34db7b101147c.png';
 
 interface NavigationProps {
@@ -11,7 +13,34 @@ interface NavigationProps {
 
 export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
   const { theme, setTheme } = useTheme();
-
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track search usage with debouncing
+  const handleSearchChange = (query: string) => {
+    onSearchChange(query);
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Track search after 1 second of inactivity (only if not empty)
+    if (query.trim().length > 0) {
+      searchTimeoutRef.current = setTimeout(() => {
+        trackSearchUsed();
+      }, 1000);
+    }
+  };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+  
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="flex h-14 items-center px-4 gap-4">
@@ -32,7 +61,7 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
               type="search"
               placeholder="Search by name or tags"
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9 bg-muted/50"
             />
           </div>

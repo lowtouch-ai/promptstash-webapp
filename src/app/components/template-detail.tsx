@@ -32,6 +32,13 @@ import {
   getTemplateVariables, 
   updateTemplateVariable 
 } from '@/app/services/template-variables';
+import {
+  trackPromptSent,
+  trackProviderSelected,
+  trackFavoriteAdded,
+  trackFavoriteRemoved,
+  trackPermalinkShared
+} from '@/app/services/analytics';
 
 interface TemplateDetailProps {
   template: PromptTemplate;
@@ -257,6 +264,10 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       document.body.removeChild(textarea);
       toast.error('Failed to copy to clipboard');
     }
+
+    // Track prompt sent
+    trackPromptSent(template.id, platform);
+    trackProviderSelected(platform);
   };
 
   const handlePlaceholderChange = (name: string, value: string) => {
@@ -309,6 +320,9 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     } finally {
       document.body.removeChild(textarea);
     }
+
+    // Track permalink shared
+    trackPermalinkShared('copy');
   };
 
   // Handle sharing to X (Twitter)
@@ -318,6 +332,7 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer');
     setSharePopoverOpen(false);
+    trackPermalinkShared('twitter');
   };
 
   // Handle sharing to LinkedIn
@@ -326,6 +341,7 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
     window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
     setSharePopoverOpen(false);
+    trackPermalinkShared('linkedin');
   };
 
   return (
@@ -358,7 +374,7 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                     />
                   </Button>
                   <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
-                    <PopoverTrigger>
+                    <PopoverTrigger asChild>
                       <Button 
                         variant="ghost" 
                         size="icon"
