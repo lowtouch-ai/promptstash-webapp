@@ -40,6 +40,8 @@ PromptStash is a powerful, open-source prompt management tool that helps you org
 - **Template Parser**: Automatically detect `{{variable-name}}` placeholders
 - **Copy to Clipboard**: One-click copy with visual feedback
 - **URL Prefilling**: Pre-populate AI platforms with your prompt (when supported)
+- **Permalink Support**: Share templates and filters via URL parameters - [Learn more →](PERMALINKS.md)
+- **Contributor Attribution**: Display template authors with direct links to their GitHub profiles
 
 ## 🚀 Getting Started
 
@@ -252,6 +254,89 @@ The sitemap contains:
 
 For detailed instructions and troubleshooting, see [scripts/README.md](scripts/README.md).
 
+## ⚡ Cache Warming
+
+PromptStash includes a cache warming script that pre-fetches all templates from GitHub and saves them to a JSON file. This helps improve initial load performance and avoid GitHub API rate limits.
+
+### Generating the Template Cache
+
+Run the cache warming script to create `/public/templates-cache.json`:
+
+```bash
+node scripts/warm-cache.js
+```
+
+### With GitHub Token (Recommended)
+
+For higher rate limits and better reliability, use a GitHub personal access token:
+
+```bash
+export GITHUB_TOKEN=your_token_here
+node scripts/warm-cache.js
+```
+
+Or in a single command:
+
+```bash
+GITHUB_TOKEN=your_token_here node scripts/warm-cache.js
+```
+
+### What the Cache Contains
+
+The generated cache file includes:
+- All parsed template metadata (name, description, category, tags)
+- Extracted placeholders from template content
+- GitHub metadata (commit SHA, repository URL, YAML path)
+- Timestamp and generation date for cache validation
+
+### Benefits
+
+- **Faster Initial Load**: Templates are pre-fetched and ready to use
+- **Rate Limit Avoidance**: Reduces GitHub API calls on page load
+- **Offline Development**: Work with templates without network access
+- **Build Integration**: Can be run as part of your CI/CD pipeline
+
+### Adding to package.json
+
+You can add a convenient npm script to package.json:
+
+```json
+{
+  "scripts": {
+    "warm-cache": "node scripts/warm-cache.js"
+  }
+}
+```
+
+Then run with:
+
+```bash
+npm run warm-cache
+```
+
+### Output Example
+
+```
+🔥 Warming cache for PromptStash templates...
+
+📂 Fetching repository tree...
+✅ Found 150 items in repository
+
+📄 Processing 45 YAML template files...
+
+   Processing business/proposal.yaml... ✅
+   Processing content/blog-post.yaml... ✅
+   ...
+
+✅ Successfully cached 45 templates!
+📦 Cache file saved to: /public/templates-cache.json
+📊 File size: 125.34 KB
+
+📊 GitHub API Rate Limit:
+   Remaining: 4985/5000
+   Resets at: 1/18/2026, 2:30:00 PM
+```
+
 ## 🔍 SEO & Social Sharing
 
 PromptStash is optimized for sharing on social media platforms like X (Twitter) and LinkedIn with dynamic meta tags.
@@ -315,6 +400,73 @@ The meta tags service is located at `/src/app/services/meta-tags.ts` and include
 - `resetMetaTags()` - Resets to defaults when closing a template
 
 Category-specific images are automatically selected based on template categories like Content Creation, Development, Marketing, etc.
+
+## 👥 Contributor Attribution
+
+PromptStash recognizes and credits template authors by displaying their GitHub username directly on each template. This feature helps build community recognition and makes it easy to discover more work from talented prompt creators.
+
+### How It Works
+
+Template contributors are automatically displayed:
+- **Card View**: Under the template name with a user icon
+- **List View**: Between the template name and description
+- **Detail View**: Below the description in the template header
+
+Each contributor username is clickable and links directly to their GitHub profile, making it easy to:
+- Explore more templates from the same author
+- Follow contributors on GitHub
+- Connect with the prompt engineering community
+- Give credit where credit is due
+
+### Adding Contributor Information
+
+Template authors can add their GitHub username to any template YAML file using the `contributor` field:
+
+```yaml
+name: Technical Blog Post Generator
+description: Generate comprehensive technical blog posts with proper structure and depth
+category: Content Creation
+tags:
+  - writing
+  - technical
+  - blog
+contributor: johndoe  # Add your GitHub username here
+
+prompt:
+  user: |
+    Create a detailed technical blog post about {{topic}}.
+    Target audience: {{audience}}
+    ...
+
+inputs:
+  - name: topic
+    description: The main technical topic to write about
+    required: true
+  - name: audience
+    description: Target reader demographic
+    required: true
+```
+
+### Example Display
+
+When a user views the template, they'll see:
+
+```
+Technical Blog Post Generator
+@johndoe                    [← Links to https://github.com/johndoe]
+Generate comprehensive technical blog posts...
+```
+
+### Contributing Templates
+
+Want to see your name on PromptStash? Contribute templates to the [promptstash-templates repository](https://github.com/lowtouch-ai/promptstash-templates):
+
+1. **Fork the repository**: Create your own copy
+2. **Add your template**: Include your GitHub username in the `contributor` field
+3. **Submit a PR**: Share your prompt with the community
+4. **Get credited**: Your username will appear on every template you create
+
+This attribution system helps build a thriving community of prompt engineers and gives recognition to those who contribute valuable templates to the ecosystem.
 
 ---
 

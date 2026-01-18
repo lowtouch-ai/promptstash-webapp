@@ -1,4 +1,4 @@
-import { Eye, Star, ExternalLink, Github, HardDrive, Calendar, Loader2 } from 'lucide-react';
+import { Eye, Star, ExternalLink, Github, HardDrive, Calendar, Loader2, User } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { Button } from '@/app/components/ui/button';
@@ -126,6 +126,18 @@ export function TemplateList({
                     </div>
                   </div>
                 </div>
+                {template.contributor && (
+                  <a
+                    href={`https://github.com/${template.contributor}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors w-fit mt-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <User className="h-3 w-3" />
+                    <span>@{template.contributor}</span>
+                  </a>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <Button
@@ -247,6 +259,18 @@ export function TemplateList({
                 <Calendar className="h-3.5 w-3.5" />
                 <span>{template.lastUpdated}</span>
               </div>
+              {template.contributor && (
+                <a
+                  href={`https://github.com/${template.contributor}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors w-fit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <User className="h-3.5 w-3.5" />
+                  <span>@{template.contributor}</span>
+                </a>
+              )}
             </div>
           </CardContent>
         </Card>

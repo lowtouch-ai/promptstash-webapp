@@ -9,9 +9,10 @@ import packageJson from '../../../package.json';
 interface NavigationProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onLogoClick?: () => void;
 }
 
-export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
+export function Navigation({ searchQuery, onSearchChange, onLogoClick }: NavigationProps) {
   const { theme, setTheme } = useTheme();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -45,7 +46,11 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="flex h-14 items-center px-4 gap-4">
         {/* Logo */}
-        <div className="flex items-center gap-3 min-w-[240px]">
+        <button 
+          onClick={onLogoClick}
+          className="flex items-center gap-3 min-w-[240px] hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
+          title="Return to home and clear all filters"
+        >
           <img
             src="https://demo2025a.lowtouch.ai/static/favicon.png"
             alt="PromptStash.io"
@@ -58,7 +63,7 @@ export function Navigation({ searchQuery, onSearchChange }: NavigationProps) {
             </div>
             <span className="text-[10px] text-muted-foreground leading-tight">Built by the Community. Ready to Run Prompts</span>
           </div>
-        </div>
+        </button>
 
         {/* Search Bar */}
         <div className="flex-1 max-w-xl">

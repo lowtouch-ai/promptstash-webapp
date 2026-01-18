@@ -16,6 +16,7 @@ export interface PromptTemplate {
   githubCommit?: string;
   githubUrl?: string;
   yamlPath?: string; // Relative path to YAML file for permalinks
+  contributor?: string; // GitHub username of the template owner
   isFavorite?: boolean;
   isModified?: boolean;
 }
@@ -50,6 +51,7 @@ Make it engaging and accessible while maintaining technical accuracy.`,
     source: 'local',
     lastUpdated: '15 Jan 2026',
     yamlPath: 'content-creation/technical-blog-post.yaml',
+    contributor: 'johndoe',
   },
   {
     id: '2',
@@ -78,6 +80,7 @@ Provide specific, actionable suggestions with examples.`,
     githubCommit: 'def5678',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/development/code-review.yaml',
     yamlPath: 'development/code-review.yaml',
+    contributor: 'janedeveloper',
   },
   {
     id: '3',
@@ -176,6 +179,7 @@ Design a structured path with:
     githubCommit: 'mno7890',
     githubUrl: 'https://github.com/yourusername/prompt-templates/blob/main/education/learning-path-creator.yaml',
     yamlPath: 'education/learning-path-creator.yaml',
+    contributor: 'alexteacher',
   },
   {
     id: '6',

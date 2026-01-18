@@ -30,6 +30,7 @@ interface YAMLTemplate {
   tags?: string[];
   prompt?: string | { user?: string; system?: string }; // YAML files use "prompt" field with nested "user"
   template?: string; // Fallback for backwards compatibility
+  contributor?: string; // GitHub username of template owner
   inputs?: Array<{
     name: string;
     description?: string;
@@ -203,12 +204,36 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
             ...folderTags,
           ];
 
-          // Use current date as lastUpdated to avoid extra API calls
-          const lastUpdated = new Date().toLocaleDateString('en-GB', {
+          // Fetch the last commit date for this file from GitHub API
+          let lastUpdated = new Date().toLocaleDateString('en-GB', {
             day: 'numeric',
             month: 'short',
             year: 'numeric',
           });
+
+          try {
+            const commitsUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${encodeURIComponent(file.path)}&per_page=1`;
+            const commitsResponse = await fetch(commitsUrl, {
+              headers: {
+                'Accept': 'application/vnd.github.v3+json',
+              },
+            });
+
+            if (commitsResponse.ok) {
+              const commits = await commitsResponse.json();
+              if (commits && commits.length > 0) {
+                const commitDate = new Date(commits[0].commit.author.date);
+                lastUpdated = commitDate.toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                });
+              }
+            }
+          } catch (commitError) {
+            console.warn(`Could not fetch commit date for ${file.path}:`, commitError);
+            // Fall back to current date if commit fetch fails
+          }
 
           // Extract template text from prompt field (could be string or nested object with "user" key)
           let templateText = '';
@@ -263,6 +288,7 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
             githubCommit: file.sha.substring(0, 7),
             githubUrl: `https://github.com/${GITHUB_REPO}/blob/${GITHUB_BRANCH}/${file.path}`,
             yamlPath: file.path, // Add the relative path for permalinks
+            contributor: parsed.contributor, // Add contributor GitHub username
           };
 
           return template;
