@@ -108,6 +108,26 @@ export default function App() {
     loadTemplates();
   }, []);
 
+  // Dynamically extract all unique tags from templates
+  const allTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    templates.forEach((template) => {
+      template.tags.forEach((tag) => tagsSet.add(tag));
+    });
+    return Array.from(tagsSet).sort();
+  }, [templates]);
+
+  // Dynamically extract all unique categories from templates
+  const categories = useMemo(() => {
+    const categoriesSet = new Set<string>();
+    templates.forEach((template) => {
+      if (template.category) {
+        categoriesSet.add(template.category);
+      }
+    });
+    return Array.from(categoriesSet).sort();
+  }, [templates]);
+
   // Handle permalink on mount - check for ?y= URL parameter
   useEffect(() => {
     console.log('Permalink effect running:', { 
@@ -126,10 +146,14 @@ export default function App() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const yamlPath = urlParams.get('y');
+    const categoryParam = urlParams.get('c');
+    const tagsParam = urlParams.get('t');
+    const searchParam = urlParams.get('q');
     
     console.log('URL search string:', window.location.search);
-    console.log('Checking for permalink parameter:', yamlPath);
+    console.log('Checking for permalink parameters:', { yamlPath, categoryParam, tagsParam, searchParam });
     
+    // Handle template permalink
     if (yamlPath) {
       console.log('Permalink yamlPath:', yamlPath);
       console.log('Available templates:', templates.map(t => ({ id: t.id, name: t.name, yamlPath: t.yamlPath })));
@@ -161,8 +185,84 @@ export default function App() {
       }
     }
     
+    // Handle category permalink
+    if (categoryParam) {
+      console.log('Permalink category:', categoryParam);
+      console.log('Available categories:', categories);
+      
+      // Check if category exists in the list
+      if (categories.includes(categoryParam)) {
+        console.log('Selecting category from permalink:', categoryParam);
+        setSelectedCategory(categoryParam);
+        // Deselect quick filter when category is set from permalink
+        setQuickFilter('none');
+        trackCategoryFilterUsed(categoryParam);
+        toast.success(`Category "${categoryParam}" selected from permalink`);
+      } else {
+        toast.error('Category not found');
+        console.error('No category found with name:', categoryParam);
+        console.error('Available categories:', categories);
+        // Clear invalid parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('c');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+    
+    // Handle tags permalink
+    if (tagsParam) {
+      console.log('Permalink tags:', tagsParam);
+      console.log('Available tags:', allTags);
+      
+      // Parse comma-separated tags
+      const requestedTags = tagsParam.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      console.log('Requested tags:', requestedTags);
+      
+      // Filter to only valid tags
+      const validTags = requestedTags.filter(tag => allTags.includes(tag));
+      const invalidTags = requestedTags.filter(tag => !allTags.includes(tag));
+      
+      if (validTags.length > 0) {
+        console.log('Selecting tags from permalink:', validTags);
+        setSelectedTags(validTags);
+        // Deselect quick filter when tags are set from permalink
+        setQuickFilter('none');
+        trackTagFilterUsed(validTags);
+        
+        if (invalidTags.length > 0) {
+          toast.warning(`Tags selected: ${validTags.join(', ')}`, {
+            description: `Invalid tags ignored: ${invalidTags.join(', ')}`
+          });
+        } else {
+          toast.success(`Tags selected from permalink: ${validTags.join(', ')}`);
+        }
+        
+        // Update URL to remove invalid tags if any
+        if (invalidTags.length > 0) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('t', validTags.join(','));
+          window.history.replaceState({}, '', url.toString());
+        }
+      } else {
+        toast.error('No valid tags found');
+        console.error('None of the requested tags are valid:', requestedTags);
+        console.error('Available tags:', allTags);
+        // Clear invalid parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('t');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+    
+    // Handle search permalink
+    if (searchParam) {
+      console.log('Permalink search query:', searchParam);
+      setSearchQuery(searchParam);
+      toast.success(`Search query loaded from permalink: "${searchParam}"`);
+    }
+    
     setPermalinkProcessed(true);
-  }, [templates, isLoading, permalinkProcessed]);
+  }, [templates, isLoading, permalinkProcessed, categories, allTags]);
 
   // Update URL when template is selected (but not during initial permalink load)
   useEffect(() => {
@@ -192,25 +292,81 @@ export default function App() {
     }
   }, [selectedTemplateId, templates, permalinkProcessed]);
 
-  // Dynamically extract all unique tags from templates
-  const allTags = useMemo(() => {
-    const tagsSet = new Set<string>();
-    templates.forEach((template) => {
-      template.tags.forEach((tag) => tagsSet.add(tag));
-    });
-    return Array.from(tagsSet).sort();
-  }, [templates]);
-
-  // Dynamically extract all unique categories from templates
-  const categories = useMemo(() => {
-    const categoriesSet = new Set<string>();
-    templates.forEach((template) => {
-      if (template.category) {
-        categoriesSet.add(template.category);
+  // Update URL when category is selected (but not during initial permalink load)
+  useEffect(() => {
+    // Skip URL update if we're still processing the initial permalink
+    if (!permalinkProcessed) {
+      return;
+    }
+    
+    const url = new URL(window.location.href);
+    const currentCategory = url.searchParams.get('c');
+    
+    if (selectedCategory !== 'all') {
+      // Set category parameter if a specific category is selected
+      if (currentCategory !== selectedCategory) {
+        url.searchParams.set('c', selectedCategory);
+        window.history.pushState({}, '', url.toString());
       }
-    });
-    return Array.from(categoriesSet).sort();
-  }, [templates]);
+    } else {
+      // Clear category parameter when "all" is selected
+      if (currentCategory) {
+        url.searchParams.delete('c');
+        window.history.pushState({}, '', url.toString());
+      }
+    }
+  }, [selectedCategory, permalinkProcessed]);
+
+  // Update URL when tags are selected (but not during initial permalink load)
+  useEffect(() => {
+    // Skip URL update if we're still processing the initial permalink
+    if (!permalinkProcessed) {
+      return;
+    }
+    
+    const url = new URL(window.location.href);
+    const currentTags = url.searchParams.get('t');
+    
+    if (selectedTags.length > 0) {
+      // Set tags parameter with comma-separated values
+      const tagsString = selectedTags.join(',');
+      if (currentTags !== tagsString) {
+        url.searchParams.set('t', tagsString);
+        window.history.pushState({}, '', url.toString());
+      }
+    } else {
+      // Clear tags parameter when no tags are selected
+      if (currentTags) {
+        url.searchParams.delete('t');
+        window.history.pushState({}, '', url.toString());
+      }
+    }
+  }, [selectedTags, permalinkProcessed]);
+
+  // Update URL when search query changes (but not during initial permalink load)
+  useEffect(() => {
+    // Skip URL update if we're still processing the initial permalink
+    if (!permalinkProcessed) {
+      return;
+    }
+    
+    const url = new URL(window.location.href);
+    const currentSearch = url.searchParams.get('q');
+    
+    if (searchQuery.trim().length > 0) {
+      // Set search parameter if there's a search query
+      if (currentSearch !== searchQuery) {
+        url.searchParams.set('q', searchQuery);
+        window.history.pushState({}, '', url.toString());
+      }
+    } else {
+      // Clear search parameter when search is empty
+      if (currentSearch) {
+        url.searchParams.delete('q');
+        window.history.pushState({}, '', url.toString());
+      }
+    }
+  }, [searchQuery, permalinkProcessed]);
 
   // Filter templates based on all criteria
   const filteredTemplates = useMemo(() => {

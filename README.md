@@ -40,6 +40,7 @@ PromptStash is a powerful, open-source prompt management tool that helps you org
 - **Template Parser**: Automatically detect `{{variable-name}}` placeholders
 - **Copy to Clipboard**: One-click copy with visual feedback
 - **URL Prefilling**: Pre-populate AI platforms with your prompt (when supported)
+- **Permalink Support**: Share templates and filters via URL parameters - [Learn more →](PERMALINKS.md)
 
 ## 🚀 Getting Started
 
