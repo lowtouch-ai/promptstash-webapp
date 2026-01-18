@@ -529,12 +529,26 @@ export default function App() {
     setLastClickedTagIndex(null);
   };
 
+  const handleLogoClick = () => {
+    // Clear all filters and return to home
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedTags([]);
+    setLastClickedTagIndex(null);
+    setQuickFilter('none');
+    setSelectedTemplateId(null);
+    resetMetaTags();
+    
+    // Update URL to remove any query parameters
+    window.history.pushState({}, '', window.location.pathname);
+  };
+
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="h-screen flex flex-col bg-background">
-        <Navigation searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+        <Navigation searchQuery={searchQuery} onSearchChange={setSearchQuery} onLogoClick={handleLogoClick} />
         
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar always visible */}

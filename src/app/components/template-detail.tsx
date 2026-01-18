@@ -15,6 +15,7 @@ import {
   Star,
   Share2,
   Link as LinkIcon,
+  User,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -498,6 +499,19 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                   )}
                   <span className="text-xs text-muted-foreground ml-2">
                     {template.category} • Updated {template.lastUpdated}
+                    {template.contributor && (
+                      <>
+                        {' • '}
+                        <a
+                          href={`https://github.com/${template.contributor}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          @{template.contributor}
+                        </a>
+                      </>
+                    )}
                   </span>
                 </div>
               </div>

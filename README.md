@@ -41,6 +41,7 @@ PromptStash is a powerful, open-source prompt management tool that helps you org
 - **Copy to Clipboard**: One-click copy with visual feedback
 - **URL Prefilling**: Pre-populate AI platforms with your prompt (when supported)
 - **Permalink Support**: Share templates and filters via URL parameters - [Learn more →](PERMALINKS.md)
+- **Contributor Attribution**: Display template authors with direct links to their GitHub profiles
 
 ## 🚀 Getting Started
 
@@ -399,6 +400,73 @@ The meta tags service is located at `/src/app/services/meta-tags.ts` and include
 - `resetMetaTags()` - Resets to defaults when closing a template
 
 Category-specific images are automatically selected based on template categories like Content Creation, Development, Marketing, etc.
+
+## 👥 Contributor Attribution
+
+PromptStash recognizes and credits template authors by displaying their GitHub username directly on each template. This feature helps build community recognition and makes it easy to discover more work from talented prompt creators.
+
+### How It Works
+
+Template contributors are automatically displayed:
+- **Card View**: Under the template name with a user icon
+- **List View**: Between the template name and description
+- **Detail View**: Below the description in the template header
+
+Each contributor username is clickable and links directly to their GitHub profile, making it easy to:
+- Explore more templates from the same author
+- Follow contributors on GitHub
+- Connect with the prompt engineering community
+- Give credit where credit is due
+
+### Adding Contributor Information
+
+Template authors can add their GitHub username to any template YAML file using the `contributor` field:
+
+```yaml
+name: Technical Blog Post Generator
+description: Generate comprehensive technical blog posts with proper structure and depth
+category: Content Creation
+tags:
+  - writing
+  - technical
+  - blog
+contributor: johndoe  # Add your GitHub username here
+
+prompt:
+  user: |
+    Create a detailed technical blog post about {{topic}}.
+    Target audience: {{audience}}
+    ...
+
+inputs:
+  - name: topic
+    description: The main technical topic to write about
+    required: true
+  - name: audience
+    description: Target reader demographic
+    required: true
+```
+
+### Example Display
+
+When a user views the template, they'll see:
+
+```
+Technical Blog Post Generator
+@johndoe                    [← Links to https://github.com/johndoe]
+Generate comprehensive technical blog posts...
+```
+
+### Contributing Templates
+
+Want to see your name on PromptStash? Contribute templates to the [promptstash-templates repository](https://github.com/lowtouch-ai/promptstash-templates):
+
+1. **Fork the repository**: Create your own copy
+2. **Add your template**: Include your GitHub username in the `contributor` field
+3. **Submit a PR**: Share your prompt with the community
+4. **Get credited**: Your username will appear on every template you create
+
+This attribution system helps build a thriving community of prompt engineers and gives recognition to those who contribute valuable templates to the ecosystem.
 
 ---
 
