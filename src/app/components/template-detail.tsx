@@ -59,6 +59,12 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
   // Refs to always have current values in async callbacks
   const templateRef = useRef(template);
   const placeholderValuesRef = useRef(placeholderValues);
+  const parsedPlaceholdersRef = useRef<Array<{
+    name: string;
+    description?: string;
+    required: boolean;
+    type?: string;
+  }>>([]);
   
   // Keep refs in sync with current values
   useEffect(() => {
@@ -126,6 +132,11 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     }));
   }, [template.template, template.placeholders]);
 
+  // Keep parsedPlaceholders ref in sync
+  useEffect(() => {
+    parsedPlaceholdersRef.current = parsedPlaceholders;
+  }, [parsedPlaceholders]);
+
   const renderedPrompt = useMemo(() => {
     // Safety check: ensure template.template exists and is a string
     if (!template.template || typeof template.template !== 'string') {
@@ -134,24 +145,39 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     
     let result = template.template;
     
+    // Create a set of valid placeholder names from parsedPlaceholders
+    const validPlaceholderNames = new Set(parsedPlaceholders.map(p => p.name));
+    
     // First pass: replace filled placeholders with their values
+    // Only replace placeholders that are defined in the inputs section
     Object.entries(placeholderValues).forEach(([key, value]) => {
-      if (value) {
+      if (value && validPlaceholderNames.has(key)) {
         result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
       }
     });
     
     // Second pass: remove entire lines that contain unfilled placeholders
+    // Only check for placeholders that are defined in the inputs section
     const lines = result.split('\n');
     const filteredLines = lines.filter(line => {
-      // Check if line contains any placeholder pattern {{variable}}
-      const hasPlaceholder = /\{\{[^}]+\}\}/.test(line);
-      // Keep the line only if it doesn't have any unfilled placeholders
-      return !hasPlaceholder;
+      // Extract all placeholder patterns from the line
+      const placeholderMatches = line.match(/\{\{([^}]+)\}\}/g);
+      if (!placeholderMatches) return true;
+      
+      // Check if any of the placeholders in this line are:
+      // 1. Valid input placeholders (in parsedPlaceholders)
+      // 2. Not filled in
+      const hasUnfilledValidPlaceholder = placeholderMatches.some(match => {
+        const placeholderName = match.replace(/\{\{|\}\}/g, '').trim();
+        return validPlaceholderNames.has(placeholderName) && !placeholderValues[placeholderName];
+      });
+      
+      // Keep the line if it doesn't have unfilled valid placeholders
+      return !hasUnfilledValidPlaceholder;
     });
     
     return filteredLines.join('\n');
-  }, [template.template, placeholderValues]);
+  }, [template.template, placeholderValues, parsedPlaceholders]);
 
   const handleCopyToClipboard = () => {
     // Fallback copy method that works in all contexts
@@ -244,21 +270,39 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       // Re-compute the prompt using the CURRENT ref values to avoid stale closures
       const currentTemplate = templateRef.current.template || '';
       const currentValues = placeholderValuesRef.current;
+      const currentParsedPlaceholders = parsedPlaceholdersRef.current;
       
       let freshRenderedPrompt = currentTemplate;
       
+      // Create a set of valid placeholder names from currentParsedPlaceholders
+      const validPlaceholderNames = new Set(currentParsedPlaceholders.map(p => p.name));
+      
       // First pass: replace filled placeholders
+      // Only replace placeholders that are defined in the inputs section
       Object.entries(currentValues).forEach(([key, value]) => {
-        if (value) {
+        if (value && validPlaceholderNames.has(key)) {
           freshRenderedPrompt = freshRenderedPrompt.replace(new RegExp(`{{${key}}}`, 'g'), value);
         }
       });
       
       // Second pass: remove lines with unfilled placeholders
+      // Only check for placeholders that are defined in the inputs section
       const freshLines = freshRenderedPrompt.split('\n');
       const freshFilteredLines = freshLines.filter(line => {
-        const hasPlaceholder = /\{\{[^}]+\}\}/.test(line);
-        return !hasPlaceholder;
+        // Extract all placeholder patterns from the line
+        const placeholderMatches = line.match(/\{\{([^}]+)\}\}/g);
+        if (!placeholderMatches) return true;
+        
+        // Check if any of the placeholders in this line are:
+        // 1. Valid input placeholders (in parsedPlaceholders)
+        // 2. Not filled in
+        const hasUnfilledValidPlaceholder = placeholderMatches.some(match => {
+          const placeholderName = match.replace(/\{\{|\}\}/g, '').trim();
+          return validPlaceholderNames.has(placeholderName) && !currentValues[placeholderName];
+        });
+        
+        // Keep the line if it doesn't have unfilled valid placeholders
+        return !hasUnfilledValidPlaceholder;
       });
       
       freshRenderedPrompt = freshFilteredLines.join('\n');
