@@ -252,6 +252,89 @@ The sitemap contains:
 
 For detailed instructions and troubleshooting, see [scripts/README.md](scripts/README.md).
 
+## ⚡ Cache Warming
+
+PromptStash includes a cache warming script that pre-fetches all templates from GitHub and saves them to a JSON file. This helps improve initial load performance and avoid GitHub API rate limits.
+
+### Generating the Template Cache
+
+Run the cache warming script to create `/public/templates-cache.json`:
+
+```bash
+node scripts/warm-cache.js
+```
+
+### With GitHub Token (Recommended)
+
+For higher rate limits and better reliability, use a GitHub personal access token:
+
+```bash
+export GITHUB_TOKEN=your_token_here
+node scripts/warm-cache.js
+```
+
+Or in a single command:
+
+```bash
+GITHUB_TOKEN=your_token_here node scripts/warm-cache.js
+```
+
+### What the Cache Contains
+
+The generated cache file includes:
+- All parsed template metadata (name, description, category, tags)
+- Extracted placeholders from template content
+- GitHub metadata (commit SHA, repository URL, YAML path)
+- Timestamp and generation date for cache validation
+
+### Benefits
+
+- **Faster Initial Load**: Templates are pre-fetched and ready to use
+- **Rate Limit Avoidance**: Reduces GitHub API calls on page load
+- **Offline Development**: Work with templates without network access
+- **Build Integration**: Can be run as part of your CI/CD pipeline
+
+### Adding to package.json
+
+You can add a convenient npm script to package.json:
+
+```json
+{
+  "scripts": {
+    "warm-cache": "node scripts/warm-cache.js"
+  }
+}
+```
+
+Then run with:
+
+```bash
+npm run warm-cache
+```
+
+### Output Example
+
+```
+🔥 Warming cache for PromptStash templates...
+
+📂 Fetching repository tree...
+✅ Found 150 items in repository
+
+📄 Processing 45 YAML template files...
+
+   Processing business/proposal.yaml... ✅
+   Processing content/blog-post.yaml... ✅
+   ...
+
+✅ Successfully cached 45 templates!
+📦 Cache file saved to: /public/templates-cache.json
+📊 File size: 125.34 KB
+
+📊 GitHub API Rate Limit:
+   Remaining: 4985/5000
+   Resets at: 1/18/2026, 2:30:00 PM
+```
+
 ## 🔍 SEO & Social Sharing
 
 PromptStash is optimized for sharing on social media platforms like X (Twitter) and LinkedIn with dynamic meta tags.
