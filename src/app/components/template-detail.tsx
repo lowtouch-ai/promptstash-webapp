@@ -562,25 +562,46 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
         <div className="border-b px-6">
-          <TabsList className="max-w-4xl rounded-none bg-transparent justify-start">
-            <TabsTrigger value="variables" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Fill Variables
-              {parsedPlaceholders.filter((p) => p.required).length > 0 && (
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {parsedPlaceholders.filter((p) => p.required).length} required
-                </Badge>
+          <div className="flex items-center justify-between max-w-4xl">
+            <TabsList className="rounded-none bg-transparent justify-start">
+              <TabsTrigger value="variables" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Fill Variables
+                {parsedPlaceholders.filter((p) => p.required).length > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {parsedPlaceholders.filter((p) => p.required).length} required
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="template" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Original Template
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Preview
+              </TabsTrigger>
+            </TabsList>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCopyToClipboard}
+              disabled={!allFieldsFilled}
+              className="flex items-center gap-2"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy to Clipboard
+                </>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="template" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Original Template
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Preview
-            </TabsTrigger>
-          </TabsList>
+            </Button>
+          </div>
         </div>
 
         {/* Variables Tab */}
@@ -686,12 +707,6 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                     {renderedPrompt}
                   </pre>
                 </ScrollArea>
-              </CardContent>
-              <CardContent className="pt-0 flex justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
-                  <Copy className="h-3.5 w-3.5 mr-2" />
-                  Copy to Clipboard
-                </Button>
               </CardContent>
             </Card>
           </div>
