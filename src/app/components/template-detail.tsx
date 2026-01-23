@@ -27,6 +27,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { ScrollArea } from '@/app/components/ui/scroll-area';
 import { Separator } from '@/app/components/ui/separator';
 import { Popover, PopoverContent, PopoverTrigger } from '@/app/components/ui/popover';
+import { Switch } from '@/app/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip';
 import { PromptTemplate } from '@/app/data/mock-templates';
 import { toast } from 'sonner';
 import { 
@@ -40,6 +42,7 @@ import {
   trackFavoriteRemoved,
   trackPermalinkShared
 } from '@/app/services/analytics';
+import { prependProfileToPrompt, getUserProfile } from '@/app/services/user-profile';
 
 interface TemplateDetailProps {
   template: PromptTemplate;
@@ -52,6 +55,11 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('variables');
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
+  const [includeProfile, setIncludeProfile] = useState(true);
+  
+  // Check if user has a profile set
+  const userProfile = getUserProfile();
+  const hasProfile = userProfile && userProfile.trim().length > 0;
   
   // Debounce timer ref for auto-save
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,10 +187,18 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     return filteredLines.join('\n');
   }, [template.template, placeholderValues, parsedPlaceholders]);
 
+  // Final prompt with profile prepended (for display in preview)
+  const finalPromptWithProfile = useMemo(() => {
+    return includeProfile ? prependProfileToPrompt(renderedPrompt) : renderedPrompt;
+  }, [renderedPrompt, includeProfile]);
+
   const handleCopyToClipboard = () => {
+    // Prepend profile to the rendered prompt if includeProfile is true
+    const finalPrompt = includeProfile ? prependProfileToPrompt(renderedPrompt) : renderedPrompt;
+    
     // Fallback copy method that works in all contexts
     const textarea = document.createElement('textarea');
-    textarea.value = renderedPrompt;
+    textarea.value = finalPrompt;
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
     document.body.appendChild(textarea);
@@ -233,9 +249,12 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
     const isNewTabRequest = event && (event.ctrlKey || event.metaKey);
     const target = isNewTabRequest ? '_blank' : `_promptstash_${platform}`;
 
+    // Prepend profile to rendered prompt before copying
+    const finalPrompt = includeProfile ? prependProfileToPrompt(renderedPrompt) : renderedPrompt;
+
     // Copy to clipboard first using current values
     const textarea = document.createElement('textarea');
-    textarea.value = renderedPrompt;
+    textarea.value = finalPrompt;
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
     document.body.appendChild(textarea);
@@ -626,25 +645,52 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                 Preview
               </TabsTrigger>
             </TabsList>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleCopyToClipboard}
-              disabled={!allFieldsFilled}
-              className="flex items-center gap-2"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy to Clipboard
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-3">
+              {/* Include Profile Toggle */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-2">
+                    <Label 
+                      htmlFor="include-profile-toggle" 
+                      className={`text-sm cursor-pointer ${!hasProfile ? 'text-muted-foreground' : ''}`}
+                    >
+                      Include Profile
+                    </Label>
+                    <Switch
+                      id="include-profile-toggle"
+                      checked={includeProfile && hasProfile}
+                      onCheckedChange={setIncludeProfile}
+                      disabled={!hasProfile}
+                    />
+                  </div>
+                </TooltipTrigger>
+                {!hasProfile && (
+                  <TooltipContent>
+                    <p>No profile set in Settings</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopyToClipboard}
+                disabled={!allFieldsFilled}
+                className="flex items-center gap-2"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy to Clipboard
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -742,13 +788,13 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                   Live Preview
                 </CardTitle>
                 <CardDescription>
-                  This is how your prompt will look with the current values
+                  This is how your prompt will look with the current values (including your profile if set)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[600px]">
                   <pre className="text-sm font-mono whitespace-pre-wrap bg-muted p-4 rounded-lg">
-                    {renderedPrompt}
+                    {finalPromptWithProfile}
                   </pre>
                 </ScrollArea>
               </CardContent>

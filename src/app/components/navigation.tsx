@@ -2,9 +2,10 @@ import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink } fr
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { trackSearchUsed } from '@/app/services/analytics';
 import packageJson from '../../../package.json';
+import { SettingsModal } from '@/app/components/settings-modal';
 
 interface NavigationProps {
   searchQuery: string;
@@ -15,6 +16,7 @@ interface NavigationProps {
 export function Navigation({ searchQuery, onSearchChange, onLogoClick }: NavigationProps) {
   const { theme, setTheme } = useTheme();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
   // Track search usage with debouncing
   const handleSearchChange = (query: string) => {
@@ -106,7 +108,12 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
-          <Button variant="ghost" size="icon" title="Settings">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            title="Settings"
+          >
             <Settings className="h-4 w-4" />
           </Button>
 
@@ -135,6 +142,7 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
           </div>
         </div>
       </div>
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }

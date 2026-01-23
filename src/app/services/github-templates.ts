@@ -6,7 +6,7 @@ const GITHUB_BRANCH = 'main';
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 const CACHE_KEY = 'promptstash_templates_cache';
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds (extended from 1 hour)
 
 interface GitHubTreeItem {
   path: string;
@@ -130,7 +130,7 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
     return cachedTemplates;
   }
 
-  // Also check for stale cache - if it exists, return it while we try to fetch fresh data in the background
+  // Check for stale cache - if it exists, we'll return it if GitHub fetch fails
   const staleTemplates = loadStaleCache();
 
   // Try to load static cache as a fallback
@@ -151,15 +151,14 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
     if (!treeResponse.ok) {
       // Check if it's a rate limit error
       if (treeResponse.status === 403) {
-        const rateLimitRemaining = treeResponse.headers.get('X-RateLimit-Remaining');
-        const rateLimitReset = treeResponse.headers.get('X-RateLimit-Reset');
-        console.warn('GitHub API rate limit hit', { rateLimitRemaining, rateLimitReset });
-        
         // Return stale cache if available, otherwise empty array
         if (staleTemplates) {
           console.log('Returning stale cache due to rate limit');
           return staleTemplates;
         }
+        
+        // If no stale cache, return empty array - this is expected behavior
+        return [];
       }
       
       const errorText = await treeResponse.text();
@@ -169,7 +168,12 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
         body: errorText,
       });
       
-      throw new Error(`Failed to fetch repository tree: ${treeResponse.status}`);
+      // Return stale cache or empty array instead of throwing
+      if (staleTemplates) {
+        console.log('Returning stale cache due to API error');
+        return staleTemplates;
+      }
+      return [];
     }
 
     const treeData: GitHubTree = await treeResponse.json();
@@ -294,6 +298,12 @@ export async function fetchTemplatesFromGitHub(): Promise<PromptTemplate[]> {
           return template;
         } catch (error) {
           console.error(`Error parsing ${file.path}:`, error);
+          
+          // Enhanced error message for YAML parsing errors
+          if (error instanceof Error && error.name === 'YAMLException') {
+            console.error(`YAMLException in ${file.path}: ${error.message}`);
+          }
+          
           return null;
         }
       })

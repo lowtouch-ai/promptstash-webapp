@@ -18,6 +18,7 @@
  * - Template content
  * - Any user-entered data
  * - Personal information
+ * - Profile text content or length
  */
 
 import ReactGA from 'react-ga4';
@@ -262,4 +263,108 @@ export function trackViewModeChanged(mode: 'card' | 'list') {
   } catch (error) {
     console.error('[Analytics] Error tracking view mode:', error);
   }
+}
+
+// =============================================================================
+// Settings Modal Analytics
+// =============================================================================
+
+// Track settings modal opened
+export function trackSettingsModalOpened() {
+  if (!isInitialized) return;
+  
+  try {
+    ReactGA.event({
+      category: 'Settings',
+      action: 'modal_opened',
+      label: 'Settings Modal',
+    });
+  } catch (error) {
+    console.error('[Analytics] Error tracking settings modal opened:', error);
+  }
+}
+
+// Track settings modal closed
+export function trackSettingsModalClosed() {
+  if (!isInitialized) return;
+  
+  try {
+    ReactGA.event({
+      category: 'Settings',
+      action: 'modal_closed',
+      label: 'Settings Modal',
+    });
+  } catch (error) {
+    console.error('[Analytics] Error tracking settings modal closed:', error);
+  }
+}
+
+// Track profile tab viewed
+export function trackProfileTabViewed(hasExistingProfile: boolean) {
+  if (!isInitialized) return;
+  
+  try {
+    ReactGA.event({
+      category: 'Settings',
+      action: 'profile_tab_viewed',
+      label: 'Profile Tab',
+      value: hasExistingProfile ? 1 : 0,
+    });
+  } catch (error) {
+    console.error('[Analytics] Error tracking profile tab viewed:', error);
+  }
+}
+
+// Track profile saved
+export function trackProfileSaved(hasExistingProfile: boolean) {
+  if (!isInitialized) return;
+  
+  try {
+    // Track metadata only - never the profile content
+    ReactGA.event({
+      category: 'Settings',
+      action: 'profile_saved',
+      label: hasExistingProfile ? 'Updated' : 'Created',
+    });
+  } catch (error) {
+    console.error('[Analytics] Error tracking profile saved:', error);
+  }
+}
+
+// Track profile cancelled
+export function trackProfileCancelled() {
+  if (!isInitialized) return;
+  
+  try {
+    ReactGA.event({
+      category: 'Settings',
+      action: 'profile_cancelled',
+      label: 'Profile Tab',
+    });
+  } catch (error) {
+    console.error('[Analytics] Error tracking profile cancelled:', error);
+  }
+}
+
+// Track profile text edited (fires once per session when text is modified)
+let profileEditedTracked = false;
+
+export function trackProfileTextEdited() {
+  if (!isInitialized || profileEditedTracked) return;
+  
+  try {
+    ReactGA.event({
+      category: 'Settings',
+      action: 'profile_text_edited',
+      label: 'Profile Tab',
+    });
+    profileEditedTracked = true;
+  } catch (error) {
+    console.error('[Analytics] Error tracking profile text edited:', error);
+  }
+}
+
+// Reset the profile edited flag (call this when modal is reopened)
+export function resetProfileEditedTracking() {
+  profileEditedTracked = false;
 }
