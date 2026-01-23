@@ -69,27 +69,28 @@ export default function App() {
           if (cached) {
             const cacheData = JSON.parse(cached);
             const cacheAge = Date.now() - cacheData.timestamp;
-            const isStale = cacheAge >= 60 * 60 * 1000; // 1 hour
+            const isStale = cacheAge >= 24 * 60 * 60 * 1000; // 24 hours (matches new TTL)
             
             if (isStale) {
-              toast.info('Using cached templates (GitHub API unavailable)', {
-                description: 'Fresh templates will load after rate limit resets'
+              toast.info('Using cached templates', {
+                description: 'GitHub API limit reached. Fresh templates will load when limit resets.'
               });
             } else {
-              toast.success(`Loaded ${githubTemplates.length} templates from cache`);
+              // Don't show success toast for fresh cache - it's the normal case
+              console.log(`Loaded ${githubTemplates.length} templates from cache`);
             }
           } else {
             toast.success(`Loaded ${githubTemplates.length} templates from GitHub`);
           }
         } else {
-          // Fallback to mock data if GitHub fetch fails
+          // Fallback to mock data if GitHub fetch returns empty
           const favorites = getFavorites();
           const templatesWithFavorites = mockTemplates.map(template => ({
             ...template,
             isFavorite: favorites.includes(template.id),
           }));
           setTemplates(templatesWithFavorites);
-          toast.warning('Using local templates (GitHub API unavailable)');
+          console.log('Using local fallback templates');
         }
       } catch (error) {
         console.error('Error loading templates:', error);
@@ -99,7 +100,7 @@ export default function App() {
           isFavorite: favorites.includes(template.id),
         }));
         setTemplates(templatesWithFavorites);
-        toast.warning('Using local templates (GitHub API unavailable)');
+        console.log('Using local fallback templates due to error');
       } finally {
         setIsLoading(false);
       }
