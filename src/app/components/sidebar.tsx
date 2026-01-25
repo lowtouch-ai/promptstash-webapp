@@ -9,6 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/app/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/app/components/ui/sheet';
+import { useIsMobile } from '@/app/components/ui/use-mobile';
 
 interface SidebarProps {
   selectedCategory: string;
@@ -20,6 +27,8 @@ interface SidebarProps {
   onClearTags: () => void;
   allTags: string[];
   categories: string[];
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
 }
 
 export function Sidebar({
@@ -32,9 +41,13 @@ export function Sidebar({
   onClearTags,
   allTags,
   categories,
+  mobileOpen = false,
+  onMobileOpenChange,
 }: SidebarProps) {
-  return (
-    <aside className="w-64 border-r bg-muted/30 flex flex-col min-h-0">
+  const isMobile = useIsMobile();
+
+  const sidebarContent = (
+    <>
       <div className="p-4 space-y-6 flex-shrink-0">
         {/* Quick Filters */}
         <div>
@@ -44,7 +57,10 @@ export function Sidebar({
           </h3>
           <div className="space-y-1">
             <button
-              onClick={() => onFilterChange('recent')}
+              onClick={() => {
+                onFilterChange('recent');
+                onMobileOpenChange?.(false);
+              }}
               className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                 quickFilter === 'recent' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               }`}
@@ -55,7 +71,10 @@ export function Sidebar({
               </div>
             </button>
             <button
-              onClick={() => onFilterChange('favorites')}
+              onClick={() => {
+                onFilterChange('favorites');
+                onMobileOpenChange?.(false);
+              }}
               className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                 quickFilter === 'favorites' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               }`}
@@ -76,7 +95,13 @@ export function Sidebar({
             <Folder className="h-4 w-4" />
             Categories
           </h3>
-          <Select value={selectedCategory} onValueChange={onCategoryChange}>
+          <Select
+            value={selectedCategory}
+            onValueChange={(value) => {
+              onCategoryChange(value);
+              onMobileOpenChange?.(false);
+            }}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="All Templates" />
             </SelectTrigger>
@@ -120,7 +145,10 @@ export function Sidebar({
                 key={tag}
                 variant={selectedTags.includes(tag) ? 'default' : 'outline'}
                 className="cursor-pointer hover:bg-primary/80 hover:text-primary-foreground transition-colors"
-                onClick={(e) => onTagToggle(tag, e)}
+                onClick={(e) => {
+                  onTagToggle(tag, e);
+                  onMobileOpenChange?.(false);
+                }}
               >
                 {tag}
               </Badge>
@@ -128,6 +156,29 @@ export function Sidebar({
           </div>
         </ScrollArea>
       </div>
+    </>
+  );
+
+  // Mobile: render in a Sheet
+  if (isMobile) {
+    return (
+      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="p-4 pb-0">
+            <SheetTitle>Filters</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col h-[calc(100%-60px)]">
+            {sidebarContent}
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  // Desktop: render as a normal aside
+  return (
+    <aside className="w-64 border-r bg-muted/30 flex-col min-h-0 hidden md:flex">
+      {sidebarContent}
     </aside>
   );
 }

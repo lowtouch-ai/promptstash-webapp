@@ -1,4 +1,4 @@
-import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink } from 'lucide-react';
+import { Search, Plus, Clipboard, Github, Settings, Moon, Sun, ExternalLink, Menu } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { useTheme } from 'next-themes';
@@ -11,9 +11,10 @@ interface NavigationProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onLogoClick?: () => void;
+  onMenuClick?: () => void;
 }
 
-export function Navigation({ searchQuery, onSearchChange, onLogoClick }: NavigationProps) {
+export function Navigation({ searchQuery, onSearchChange, onLogoClick, onMenuClick }: NavigationProps) {
   const { theme, setTheme } = useTheme();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -47,10 +48,21 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="flex h-14 items-center px-4 gap-4">
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onMenuClick}
+          title="Toggle sidebar"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+
         {/* Logo */}
-        <button 
+        <button
           onClick={onLogoClick}
-          className="flex items-center gap-3 min-w-[240px] hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
+          className="flex items-center gap-3 md:min-w-[240px] hover:opacity-80 transition-opacity cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-md"
           title="Return to home and clear all filters"
         >
           <img
@@ -58,7 +70,7 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
             alt="PromptStash.io"
             className="w-8 h-8 rounded-full object-cover"
           />
-          <div className="flex flex-col">
+          <div className="hidden sm:flex flex-col">
             <div className="flex items-baseline gap-2">
               <span className="font-semibold text-base leading-tight">PromptStash.io</span>
               <span className="text-[10px] text-muted-foreground leading-tight">v{packageJson.version}</span>
@@ -82,18 +94,19 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" title="Add new template">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="icon" title="Add new template" className="hidden sm:inline-flex">
             <Plus className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" title="Import from clipboard">
+          <Button variant="ghost" size="icon" title="Import from clipboard" className="hidden sm:inline-flex">
             <Clipboard className="h-4 w-4" />
           </Button>
-          <a 
-            href="https://github.com/lowtouch-ai/promptstash-webapp" 
-            target="_blank" 
+          <a
+            href="https://github.com/lowtouch-ai/promptstash-webapp"
+            target="_blank"
             rel="noopener noreferrer"
             title="View source code on GitHub"
+            className="hidden sm:inline-flex"
           >
             <Button variant="ghost" size="icon">
               <Github className="h-4 w-4" />
@@ -118,7 +131,7 @@ export function Navigation({ searchQuery, onSearchChange, onLogoClick }: Navigat
           </Button>
 
           {/* Community Links */}
-          <div className="flex items-center gap-3 ml-2 pl-3 border-l text-xs">
+          <div className="hidden lg:flex items-center gap-3 ml-2 pl-3 border-l text-xs">
             <a
               href="https://github.com/lowtouch-ai/promptstash-templates"
               target="_blank"

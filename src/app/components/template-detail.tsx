@@ -16,6 +16,9 @@ import {
   Share2,
   Link as LinkIcon,
   User,
+  ChevronDown,
+  ChevronUp,
+  Info,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { Badge } from '@/app/components/ui/badge';
@@ -43,6 +46,7 @@ import {
   trackPermalinkShared
 } from '@/app/services/analytics';
 import { prependProfileToPrompt, getUserProfile } from '@/app/services/user-profile';
+import { useIsMobile } from '@/app/components/ui/use-mobile';
 
 interface TemplateDetailProps {
   template: PromptTemplate;
@@ -56,7 +60,10 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
   const [activeTab, setActiveTab] = useState('variables');
   const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
   const [includeProfile, setIncludeProfile] = useState(true);
-  
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+
+  const isMobile = useIsMobile();
+
   // Check if user has a profile set
   const userProfile = getUserProfile();
   const hasProfile = userProfile && userProfile.trim().length > 0;
@@ -456,205 +463,208 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
       transition={{ duration: 0.3, ease: "easeInOut" }}
     >
       {/* Header */}
-      <div className="border-b bg-card p-6">
+      <div className="border-b bg-card p-3 sm:p-6">
         <div className="max-w-7xl">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-              <Button variant="ghost" size="icon" onClick={onClose} className="mt-1">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-2xl font-semibold">{template.name}</h1>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => onToggleFavorite(template.id)}
-                    className="h-8 w-8"
-                  >
-                    <Star 
-                      className={`h-4 w-4 ${template.isFavorite ? 'fill-primary text-primary' : ''}`} 
-                    />
-                  </Button>
-                  <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        className="h-8 w-8"
-                      >
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleCopyPermalink}
-                          title="Copy Link"
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleShareToX}
-                          title="Share on X"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                          </svg>
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleShareToLinkedIn}
-                          title="Share on LinkedIn"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                          >
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                          </svg>
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <p className="text-muted-foreground mb-3">{template.description}</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  {template.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {template.source === 'github' && template.githubUrl ? (
-                    <Badge 
-                      variant="outline" 
-                      className="flex items-center gap-1 cursor-pointer hover:bg-accent transition-colors"
-                      onClick={handleGithubClick}
-                    >
-                      <Github className="h-3 w-3" />
-                      GitHub
-                      <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
-                    </Badge>
+          {/* Title Row - Always visible */}
+          <div className="flex items-center gap-2 sm:gap-4 mb-2 sm:mb-4">
+            <Button variant="ghost" size="icon" onClick={onClose} className="shrink-0 h-8 w-8 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-base sm:text-2xl font-semibold flex-1 min-w-0 truncate sm:whitespace-normal">
+              {template.name}
+            </h1>
+            {/* Mobile: Show info toggle, favorite, share */}
+            <div className="flex items-center gap-1">
+              {isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowMobileDetails(!showMobileDetails)}
+                  className="h-8 w-8"
+                  title={showMobileDetails ? 'Hide details' : 'Show details'}
+                >
+                  {showMobileDetails ? (
+                    <ChevronUp className="h-4 w-4" />
                   ) : (
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      {template.source === 'github' ? (
-                        <>
-                          <Github className="h-3 w-3" />
-                          GitHub
-                        </>
-                      ) : (
-                        <>
-                          <HardDrive className="h-3 w-3" />
-                          Local
-                        </>
-                      )}
-                    </Badge>
+                    <Info className="h-4 w-4" />
                   )}
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {template.category} • Updated {template.lastUpdated}
-                    {template.contributor && (
-                      <>
-                        {' • '}
-                        <a
-                          href={`https://github.com/${template.contributor}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                        >
-                          @{template.contributor}
-                        </a>
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onToggleFavorite(template.id)}
+                className="h-8 w-8"
+              >
+                <Star
+                  className={`h-4 w-4 ${template.isFavorite ? 'fill-primary text-primary' : ''}`}
+                />
+              </Button>
+              <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" align="end">
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={handleCopyPermalink} title="Copy Link">
+                      <LinkIcon className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={handleShareToX} title="Share on X">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={handleShareToLinkedIn} title="Share on LinkedIn">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                      </svg>
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleClearAll}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear All
-            </Button>
-            <Button variant="outline" disabled>
-              <Save className="h-4 w-4 mr-2" />
-              Save As
-            </Button>
-            <Button
-              onClick={(e) => handleSendToAI('chatgpt', e)}
-              disabled={!allFieldsFilled}
-            >
+          {/* Toolbar - Hidden on mobile, visible on desktop */}
+          <div className="hidden sm:flex flex-wrap items-center gap-3 mb-4">
+            <Button onClick={(e) => handleSendToAI('chatgpt', e)} disabled={!allFieldsFilled} size="sm">
               ChatGPT
               <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
-            <Button
-              onClick={(e) => handleSendToAI('claude', e)}
-              disabled={!allFieldsFilled}
-            >
+            <Button onClick={(e) => handleSendToAI('claude', e)} disabled={!allFieldsFilled} size="sm">
               Claude
               <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
-            <Button
-              onClick={(e) => handleSendToAI('grok', e)}
-              disabled={!allFieldsFilled}
-            >
+            <Button onClick={(e) => handleSendToAI('grok', e)} disabled={!allFieldsFilled} size="sm">
               Grok
               <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
-            <Button
-              onClick={(e) => handleSendToAI('gemini', e)}
-              disabled={!allFieldsFilled}
-            >
+            <Button onClick={(e) => handleSendToAI('gemini', e)} disabled={!allFieldsFilled} size="sm">
               Gemini
               <Send className="h-3.5 w-3.5 ml-2" />
             </Button>
           </div>
+
+          {/* Details Section - Hidden on mobile by default, always visible on desktop */}
+          {(!isMobile || showMobileDetails) && (
+            <div className="space-y-3 pt-2 border-t sm:border-t-0 sm:pt-0">
+              {/* Mobile Send Buttons */}
+              {isMobile && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={(e) => handleSendToAI('chatgpt', e)} disabled={!allFieldsFilled} size="sm">
+                    GPT
+                    <Send className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                  <Button onClick={(e) => handleSendToAI('claude', e)} disabled={!allFieldsFilled} size="sm">
+                    Claude
+                    <Send className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                  <Button onClick={(e) => handleSendToAI('grok', e)} disabled={!allFieldsFilled} size="sm">
+                    Grok
+                    <Send className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                  <Button onClick={(e) => handleSendToAI('gemini', e)} disabled={!allFieldsFilled} size="sm">
+                    Gemini
+                    <Send className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">{template.description}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                {template.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+                {template.source === 'github' && template.githubUrl ? (
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={handleGithubClick}
+                  >
+                    <Github className="h-3 w-3" />
+                    GitHub
+                    <ExternalLink className="h-2.5 w-2.5 ml-0.5" />
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    {template.source === 'github' ? (
+                      <>
+                        <Github className="h-3 w-3" />
+                        GitHub
+                      </>
+                    ) : (
+                      <>
+                        <HardDrive className="h-3 w-3" />
+                        Local
+                      </>
+                    )}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground block">
+                {template.category} • Updated {template.lastUpdated}
+                {template.contributor && (
+                  <>
+                    {' • '}
+                    <a
+                      href={`https://github.com/${template.contributor}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      @{template.contributor}
+                    </a>
+                  </>
+                )}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden flex flex-col">
-        <div className="border-b px-6">
-          <div className="flex items-center justify-between max-w-4xl">
-            <TabsList className="rounded-none bg-transparent justify-start">
-              <TabsTrigger value="variables" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Fill Variables
+        <div className="border-b px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between max-w-4xl gap-2 py-2 sm:py-0">
+            <TabsList className="rounded-none bg-transparent justify-start overflow-x-auto">
+              <TabsTrigger value="variables" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Fill Variables</span>
+                <span className="sm:hidden">Variables</span>
                 {parsedPlaceholders.filter((p) => p.required).length > 0 && (
                   <Badge variant="secondary" className="ml-1 text-xs">
-                    {parsedPlaceholders.filter((p) => p.required).length} required
+                    {parsedPlaceholders.filter((p) => p.required).length}
                   </Badge>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="template" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Original Template
+              <TabsTrigger value="template" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Original Template</span>
+                <span className="sm:hidden">Template</span>
               </TabsTrigger>
-              <TabsTrigger value="preview" className="flex items-center gap-2">
-                <Eye className="h-4 w-4" />
+              <TabsTrigger value="preview" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 Preview
               </TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 pb-2 sm:pb-0">
+              <Button variant="ghost" onClick={handleClearAll} size="sm">
+                <Trash2 className="h-3.5 w-3.5 sm:mr-1" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
               {/* Include Profile Toggle */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-2">
-                    <Label 
-                      htmlFor="include-profile-toggle" 
-                      className={`text-sm cursor-pointer ${!hasProfile ? 'text-muted-foreground' : ''}`}
+                    <Label
+                      htmlFor="include-profile-toggle"
+                      className={`text-xs sm:text-sm cursor-pointer ${!hasProfile ? 'text-muted-foreground' : ''}`}
                     >
-                      Include Profile
+                      <span className="hidden sm:inline">Include Profile</span>
+                      <span className="sm:hidden">Profile</span>
                     </Label>
                     <Switch
                       id="include-profile-toggle"
@@ -670,23 +680,23 @@ export function TemplateDetail({ template, onClose, onToggleFavorite }: Template
                   </TooltipContent>
                 )}
               </Tooltip>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleCopyToClipboard}
                 disabled={!allFieldsFilled}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2"
               >
                 {copied ? (
                   <>
                     <Check className="h-3.5 w-3.5" />
-                    Copied!
+                    <span className="hidden sm:inline">Copied!</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5" />
-                    Copy to Clipboard
+                    <span className="hidden sm:inline">Copy to Clipboard</span>
                   </>
                 )}
               </Button>
