@@ -176,12 +176,7 @@ export function TemplateList({
 
   // Card view (grid)
   return (
-    <div className="p-4" style={{ 
-      display: 'grid', 
-      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 320px))',
-      gap: '1rem',
-      alignItems: 'start'
-    }}>
+    <div className="p-4 grid gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,320px))]">
       {templates.map((template) => (
         <Card
           key={template.id}

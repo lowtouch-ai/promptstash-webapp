@@ -40,6 +40,7 @@ export default function App() {
   const [recentlyUsedIds, setRecentlyUsedIds] = useState<string[]>(getRecentlyUsed());
   const [favoriteIds, setFavoriteIds] = useState<string[]>(getFavorites());
   const [permalinkProcessed, setPermalinkProcessed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Initialize analytics and set page title
   useEffect(() => {
@@ -549,10 +550,10 @@ export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <div className="h-screen flex flex-col bg-background">
-        <Navigation searchQuery={searchQuery} onSearchChange={setSearchQuery} onLogoClick={handleLogoClick} />
+        <Navigation searchQuery={searchQuery} onSearchChange={setSearchQuery} onLogoClick={handleLogoClick} onMenuClick={() => setMobileSidebarOpen(true)} />
         
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar always visible */}
+          {/* Sidebar - hidden on mobile, shown via Sheet */}
           <Sidebar
             selectedCategory={selectedCategory}
             selectedTags={selectedTags}
@@ -563,6 +564,8 @@ export default function App() {
             onClearTags={handleClearTags}
             allTags={allTags}
             categories={categories}
+            mobileOpen={mobileSidebarOpen}
+            onMobileOpenChange={setMobileSidebarOpen}
           />
 
           <main className="flex-1 overflow-hidden flex flex-col">
