@@ -3,15 +3,35 @@ import { parseDocument } from 'yaml';
 import fs from 'fs';
 import path from 'path';
 
-const REPO_OWNER = 'danielraffel';
-const REPO_NAME = 'PromptStash';
-const REPO_PATH = 'prompts';
-const BASE_URL = 'https://prong-dijon-14952475.figma.site';
+const REPO_OWNER = 'lowtouch-ai';
+const REPO_NAME = 'promptstash-templates';
+const REPO_PATH = '';  // Templates are at root level
+const BASE_URL = 'https://promptstash.io';
 
 // Create Octokit instance with optional authentication
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN, // Optional: set GITHUB_TOKEN env variable for higher rate limits
 });
+
+// Get the last commit date for a specific file
+async function getFileLastModified(filePath) {
+  try {
+    const { data: commits } = await octokit.repos.listCommits({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: filePath,
+      per_page: 1,
+    });
+
+    if (commits.length > 0) {
+      const commitDate = commits[0].commit.committer.date;
+      return commitDate.split('T')[0]; // Return YYYY-MM-DD format
+    }
+  } catch (error) {
+    console.warn(`Could not get last modified date for ${filePath}: ${error.message}`);
+  }
+  return new Date().toISOString().split('T')[0]; // Fallback to today
+}
 
 async function fetchTemplatesFromGitHub() {
   try {
@@ -45,11 +65,10 @@ async function fetchTemplatesFromGitHub() {
       recursive: 'true',
     });
 
-    // Filter for .yaml files in the prompts directory
+    // Filter for .yaml files
     const yamlFiles = tree.tree.filter(
       (item) =>
-        item.path?.startsWith(REPO_PATH + '/') &&
-        item.path?.endsWith('.yaml') &&
+        (item.path?.endsWith('.yaml') || item.path?.endsWith('.yml')) &&
         item.type === 'blob'
     );
 
@@ -69,14 +88,17 @@ async function fetchTemplatesFromGitHub() {
           const doc = parseDocument(content);
           const data = doc.toJSON();
 
-          if (data && data.name && data.description && data.template) {
-            // Calculate relative path from prompts directory
-            const yamlPath = file.path.replace(`${REPO_PATH}/`, '');
+          if (data && data.name) {
+            // Use full path as yamlPath
+            const yamlPath = file.path;
+
+            // Get last modified date from git history
+            const lastModified = await getFileLastModified(file.path);
 
             templates.push({
               name: data.name,
               yamlPath: yamlPath,
-              lastModified: new Date().toISOString().split('T')[0], // Use today's date as fallback
+              lastModified: lastModified,
             });
           }
         }

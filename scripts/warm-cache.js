@@ -2,24 +2,28 @@
 
 /**
  * Cache Warming Script for PromptStash
- * 
+ *
  * This script pre-fetches all templates from GitHub and saves them to a JSON file
  * that can be used to initialize the app's cache. This helps avoid hitting GitHub
  * API rate limits on initial page load.
- * 
+ *
  * Usage:
  *   node scripts/warm-cache.js
  *   GITHUB_TOKEN=your_token node scripts/warm-cache.js  # With authentication
- * 
+ *
  * The generated cache file can be:
  * - Served as a static asset
  * - Used to pre-populate localStorage on first visit
  * - Committed to the repository for offline use
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('yaml');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import yaml from 'yaml';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const GITHUB_REPO = 'lowtouch-ai/promptstash-templates';
 const GITHUB_BRANCH = 'main';
